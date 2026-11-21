@@ -1,0 +1,87 @@
+{
+  "server_name": "Comunidad del Canal",
+  "language": "es",
+  "_about": "Plantilla de comunidad para creadores en español neutro (Latinoamérica y España). Nombres naturales, no traducciones literales.",
+  "roles": [
+    {"name": "Admin", "color": "#E74C3C", "hoist": true, "permissions": "admin"},
+    {"name": "Moderación", "color": "#3498DB", "hoist": true, "mentionable": true, "permissions": "moderator"},
+    {"name": "Miembro VIP", "color": "#F1C40F", "hoist": true, "permissions": "member"},
+    {"name": "Avisos de Directo", "color": "#9B59B6", "mentionable": true, "permissions": "none"},
+    {"name": "Nuevos Videos", "color": "#9B59B6", "mentionable": true, "permissions": "none"},
+    {"name": "Sorteos", "color": "#9B59B6", "mentionable": true, "permissions": "none"},
+    {"name": "Comunidad", "color": "#95A5A6", "permissions": "member"}
+  ],
+  "categories": [
+    {
+      "name": "📌 EMPIEZA AQUÍ", "read_only": true, "writers": ["Admin", "Moderación"],
+      "channels": [
+        {"name": "👋・bienvenida", "topic": "Empieza aquí: qué es este lugar y cómo moverte.", "pin": true,
+         "message": "**¡Bienvenid@ a {server}!** 👋\n\nEste es el punto de encuentro de quienes ven el canal, aprenden y crean junto a nosotros.\n\n**Primeros pasos**\n1. Lee {#normas}, son cortas.\n2. Preséntate en {#presentaciones}: quién eres y en qué andas.\n3. Elige tus avisos en {#roles}.\n4. Comparte lo que haces en {#tus-creaciones}.\n\nLos videos y novedades salen primero en {#anuncios}. ¡Qué bueno tenerte aquí!"},
+        {"name": "📜・normas", "topic": "Normas cortas para que esto siga siendo un buen lugar.", "pin": true,
+         "message": "**Normas de {server}**\n\n1. **Respeto ante todo.** Critica el trabajo, nunca a las personas. Nada de acoso, odio ni insultos.\n2. **Nada de spam ni autopromoción** fuera de {#tus-creaciones}. No mandes MD sin permiso.\n3. **Cada tema en su canal**: revisa la descripción.\n4. **Nada de contenido +18, piratería ni cosas ilegales.**\n5. **No compartas datos personales**, ni tuyos ni de nadie.\n6. **La moderación tiene la última palabra.** Si no estás de acuerdo, escribe con calma a {@Moderación}.\n\nSi rompes las normas: aviso → silencio temporal → expulsión, según la gravedad."},
+        {"name": "📢・anuncios", "type": "announcement", "topic": "Videos nuevos, directos y eventos."},
+        {"name": "🔴・en-directo", "topic": "Avisos de directos y videos nuevos. Pide el rol Avisos de Directo para enterarte."},
+        {"name": "🎭・roles", "topic": "Elige de qué quieres enterarte.", "pin": true,
+         "message": "**Elige tus avisos.** Reacciona para recibir el rol y quita la reacción para dejarlo.\n\n🔴 {@Avisos de Directo}: cuando empieza el directo\n🎬 {@Nuevos Videos}: videos nuevos\n🎁 {@Sorteos}: sorteos",
+         "reactions": ["🔴", "🎬", "🎁"]},
+        {"name": "❓・preguntas-frecuentes", "topic": "Respuestas a lo que más nos preguntan.", "pin": true,
+         "message": "**Preguntas frecuentes**\n\n**¿Cómo consigo el rol Miembro VIP?** Apoya el canal con la membresía (enlace en la descripción de los videos). El rol llega en menos de 24 h.\n**¿Puedo compartir mi contenido?** Sí, en {#tus-creaciones}.\n**¿Cómo reporto a alguien?** Abre un hilo privado en {#contacto} o menciona a {@Moderación}."}
+      ]
+    },
+    {
+      "name": "💬 COMUNIDAD",
+      "channels": [
+        {"name": "💬・general", "topic": "Charla de todo un poco (dentro de las normas)."},
+        {"name": "👋・presentaciones", "topic": "Cuéntanos quién eres y en qué estás trabajando.", "slowmode": 30},
+        {"name": "🎨・tus-creaciones", "topic": "Muestra lo que hiciste. Comentarios bienvenidos, siempre con buena onda.", "slowmode": 60},
+        {"name": "💡・ideas-para-videos", "type": "forum", "topic": "Una idea por publicación. Vota con 👍 las que te gusten.",
+         "message_title": "Cómo proponer", "message": "Una idea por publicación, con un título claro. Explica por qué te gustaría verla."},
+        {"name": "🎁・sorteos", "read_only": true, "writers": ["Admin", "Moderación"], "topic": "Sorteos: participa desde la publicación. Sin compra necesaria; las bases están en cada sorteo."},
+        {"name": "📨・contacto", "thread_only": true, "thread_staff": ["Moderación", "Admin"], "pin": true,
+         "topic": "Colaboraciones, reportes y dudas privadas: abre un hilo privado.",
+         "message": "**¿Necesitas hablar en privado con el equipo?** (colaboraciones, reportar a alguien, problemas con tu cuenta)\n\n1. Pulsa el botón **Hilos** (o **+**) en este canal y elige **Hilo privado**.\n2. Ponle un nombre como `Colaboración - TuNombre` o `Reporte - usuario`.\n3. Cuéntanos qué pasa. Solo tú y {@Moderación} pueden verlo."},
+        {"name": "🌮・off-topic", "topic": "Memes, música y todo lo demás."}
+      ]
+    },
+    {
+      "name": "⭐ MIEMBROS VIP", "private_to": ["Miembro VIP", "Moderación", "Admin"],
+      "channels": [
+        {"name": "⭐・charla-vip", "topic": "Gracias por apoyar el canal 💛"},
+        {"name": "🎟️・acceso-anticipado", "read_only": true, "writers": ["Admin"], "topic": "Videos y archivos antes que nadie.",
+         "message": "Aquí llegan primero los adelantos, el detrás de cámaras y las descargas. Por favor, no los compartas fuera de este canal."}
+      ]
+    },
+    {
+      "name": "🔊 VOZ",
+      "channels": [
+        {"name": "Charla", "type": "voice"},
+        {"name": "Coworking", "type": "voice", "user_limit": 10},
+        {"name": "Preguntas en Vivo", "type": "stage"}
+      ]
+    },
+    {
+      "name": "🛡️ EQUIPO", "private_to": ["Moderación", "Admin"],
+      "channels": [
+        {"name": "chat-moderación", "topic": "Conversación del equipo."},
+        {"name": "registro-mod", "topic": "Alertas de AutoMod y notas: quién, qué y por qué."}
+      ]
+    }
+  ],
+  "automod": {"level": "standard", "alert_channel": "registro-mod", "exempt_roles": ["Moderación", "Admin"],
+              "exempt_channels": ["chat-moderación", "registro-mod"],
+              "scam_words": ["nitro gratis", "regalo de nitro", "gana dinero rápido", "inversión garantizada", "escríbeme por privado", "colaboración pagada por md"],
+              "blocked_words": [], "allowed_words": [],
+              "block_message": "Mensaje bloqueado por el filtro del servidor. Si crees que es un error, avisa a moderación."},
+  "welcome": {"system_channel": "general", "join_messages": true, "join_sticker_replies": true, "boost_messages": true, "setup_tips": false,
+              "screen": {"description": "La comunidad para ver, aprender y crear junto al canal.",
+                         "channels": [{"channel": "normas", "description": "Léelas primero", "emoji": "📜"},
+                                      {"channel": "roles", "description": "Elige tus avisos", "emoji": "🎭"},
+                                      {"channel": "presentaciones", "description": "Cuéntanos quién eres", "emoji": "👋"},
+                                      {"channel": "tus-creaciones", "description": "Muestra lo que haces", "emoji": "🎨"},
+                                      {"channel": "general", "description": "Pasa a saludar", "emoji": "💬"}]}},
+  "onboarding": {"default_channels": ["bienvenida", "normas", "anuncios", "preguntas-frecuentes", "general", "presentaciones", "tus-creaciones", "off-topic"],
+                 "questions": [{"title": "¿De qué quieres enterarte?", "options": [
+                   {"title": "Directos", "emoji": "🔴", "roles": ["Avisos de Directo"]},
+                   {"title": "Videos nuevos", "emoji": "🎬", "roles": ["Nuevos Videos"]},
+                   {"title": "Sorteos", "emoji": "🎁", "roles": ["Sorteos"], "channels": ["sorteos"]}]}]}
+}
