@@ -36,8 +36,25 @@ search before recommending.
 
 ✅ all four (2026 roundups). Pick **one** all-rounder, and add Wick only for large or high-risk servers (crypto, big creators).
 
+AutoMod (built in, set up by the script) covers word filters, scam links, mention spam and spam.
+These bots add what AutoMod can't: raid/anti-nuke protection and alt-account gates (Wick),
+warn/strike escalation and deleted-message logs (Dyno, Carl-bot). See `community-systems.md` §1.
+
+### Welcome & greetings
+| Bot | Good for | Cost |
+|---|---|---|
+| Carl-bot | Welcome message in a channel and/or DM, leave messages, embeds | Free |
+| MEE6 | Welcome message + welcome card image | Welcome free; cards and extras premium |
+| Dyno | Simple welcome/leave messages | Free |
+
+✅ all three. Use the all-rounder that's already in the server rather than adding a welcome-only
+bot. Variable syntax differs between bots, so check it before writing the setup steps. Greeting
+texts and tone variants are in `community-systems.md` §2.
+
 ### Reaction roles / self-assign roles
-Carl-bot (above) is the usual choice. Use the built-in **Onboarding** instead when Community is on.
+Carl-bot (above) is the usual choice. Use the built-in **Onboarding** instead when Community is
+on. The script can post the `#get-roles` message and add its reactions, so the bot only needs the
+emoji → role links (`community-systems.md` §4).
 
 ### Tickets / support
 | Bot | Good for | Cost | Website | Asks for |
@@ -45,7 +62,8 @@ Carl-bot (above) is the usual choice. Use the built-in **Onboarding** instead wh
 | Ticket Tool | Private support tickets from a button panel; transcripts | Free; premium | tickettool.xyz | Manage channels/roles |
 | Tickets (TicketsBot) | Same job, clean dashboard | Free; premium | tickets.bot | Manage channels/roles |
 
-✅ Ticket Tool. ⚠️ Tickets: confirm it before recommending.
+✅ Ticket Tool. ⚠️ Tickets: confirm it before recommending. For a no-bot option (private threads)
+and ticket categories by niche, see `community-systems.md` §3.
 
 ### Leveling / XP
 | Bot | Good for | Cost | Website | Asks for |
@@ -53,7 +71,7 @@ Carl-bot (above) is the usual choice. Use the built-in **Onboarding** instead wh
 | Arcane | Leveling with role rewards; also automod and giveaways | Free; voice XP and advanced features are premium | arcane.bot | Manage roles, send messages |
 | MEE6 | Leveling + rewards (if MEE6 is already the all-rounder) | Rewards mostly premium | mee6.xyz | as above |
 
-✅ both.
+✅ both. Tier names, perks and XP settings are in `community-systems.md` §5.
 
 ### Stream & upload alerts (YouTube / Twitch / TikTok / Kick)
 | Bot | Good for | Cost | Website | Asks for |
@@ -75,10 +93,11 @@ Carl-bot (above) is the usual choice. Use the built-in **Onboarding** instead wh
 ### Giveaways
 | Bot | Good for | Cost | Website |
 |---|---|---|---|
-| GiveawayBot | Simple slash-command giveaways | Free | giveawaybot.party |
-| Apollo | Giveaways with entry rules (account age, roles, message count) | Free; premium | apollo.fyi |
+| GiveawayBot | Simple slash-command giveaways: `/gcreate` (guided), `/gstart <time> <winners> <prize>`, `/greroll` | Free | giveawaybot.party |
+| Apollo | Giveaways with entry rules (account age, roles, server tenure, message count), rerolls, history | Free; premium | apollo.fyi |
 
-✅ both.
+✅ both. Use Apollo when entry rules are needed to stop alt accounts. Announcement and rules
+templates are in `community-systems.md` §6.
 
 ### Paid membership roles
 | Tool | Good for | Fee (verify on their pricing page) | Website |

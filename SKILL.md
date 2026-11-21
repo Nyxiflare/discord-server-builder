@@ -1,6 +1,6 @@
 ---
 name: discord-server-builder
-description: Designs, builds and maintains a complete Discord server - roles, categories, channels, private and read-only areas, starter posts (welcome, rules, FAQ), custom emojis and stickers - in the user's real server through a bot, and recommends the few bots that best fit the community. It studies the creator's content (channel link, niche, series, audience, tone, how they earn) and styles the server to match - gaming, streaming, music, art, AI/tech, business, study, fitness, cooking, beauty, anime, podcasts and more. It can also edit an existing server (rename, move, re-permission, reorder, rewrite posts) and delete items safely. Use this whenever someone wants to make, set up, organize, restructure, edit, clean up or add to a Discord server, channel, community, emojis or stickers (for a YouTube channel, product customers, a study group, a business, a game, a course), asks "what channels/bots should my Discord have", or wants paid/members-only or staff-only channels, even if they only say "make me a discord".
+description: Designs, builds and maintains a complete Discord server - roles, categories, channels, private and read-only areas, starter posts (welcome, rules, FAQ), custom emojis and stickers, AutoMod filters, join messages, welcome screen and onboarding questions, a no-bot ticket system, self-assign/ping roles, leveling tiers and giveaway setups - in the user's real server through a bot, and recommends the few bots that best fit the community. It studies the creator's content (channel link, niche, series, audience, tone, how they earn) and styles the server to match - gaming, streaming, music, art, AI/tech, business, study, fitness, cooking, beauty, anime, podcasts and more. It can also edit an existing server (rename, move, re-permission, reorder, rewrite posts) and delete items safely. Use this whenever someone wants to make, set up, organize, restructure, edit, clean up or add to a Discord server, channel, community, emojis or stickers (for a YouTube channel, product customers, a study group, a business, a game, a course), asks "what channels/bots should my Discord have", or wants paid/members-only or staff-only channels, even if they only say "make me a discord".
 ---
 
 # Discord Server Builder
@@ -23,7 +23,7 @@ resizing if it's installed). Paths are relative to this skill's folder.
 | `apply BLUEPRINT --guild ID --update --dry-run` | Full change list: create `+`, change `~`, delete `-` |
 | `apply BLUEPRINT --guild ID --update` | Also edits existing items to match the blueprint |
 | `apply ... --update --confirm-delete` | Also deletes what the blueprint's `remove` lists |
-| `delete --guild ID --channel N --role N --emoji N --sticker N` | Lists those items; deletes only with `--confirm-delete` |
+| `delete --guild ID --channel N --role N --emoji N --sticker N --automod N` | Lists those items; deletes only with `--confirm-delete` |
 | `undo BLUEPRINT.result.json [--dry-run]` | Deletes exactly what earlier applies created |
 
 Run them as `python scripts/discord_builder.py <command>` from the folder that holds the user's
@@ -79,7 +79,7 @@ never into the chat. If they paste it in chat anyway, don't use it: tell them to
 Developer Portal and put the new one in `.env`. Never echo, log or write the token anywhere else.
 
 The invite link asks for Administrator because creating private channels, roles and emojis needs
-broad permissions, and partial permissions cause confusing "Missing Permissions" failures. Step 8
+broad permissions, and partial permissions cause confusing "Missing Permissions" failures. Step 10
 removes it afterwards.
 
 ### 3. Draft the blueprint
@@ -133,7 +133,35 @@ recommending it, especially music and alert bots.
 Add what the chosen bots need to the blueprint now (bots.md has the table): `level-ups`,
 `live-now`, `open-a-ticket`, a `Live Ping` role and so on, so each bot has its place on day one.
 
-### 5. Emojis and stickers (optional)
+### 5. Safety, welcome and community systems
+
+Read `references/community-systems.md` for the parts this community needs. It has the blueprint
+blocks, defaults by niche and the text to give the user. Short version:
+
+- **AutoMod (always add it):** an `automod` block with a level picked from the audience. Any
+  audience mostly under 18 always gets `family-friendly`; most get `standard`; `relaxed` is only
+  for adult, high-trust groups. Write niche `blocked_words`/`scam_words`, `allowed_words` for terms
+  the niche needs, exempt the staff roles and channels, and send alerts to the staff `mod-log`.
+  It runs on Discord's side, with no bot online.
+- **Welcome:** `welcome.system_channel` for join messages, a `welcome.screen` (Community only), and
+  `onboarding` questions that hand out ping/interest roles (Community only, and 7+ default
+  channels to switch on). Per-member greetings ("Welcome @name, member #1,234") need a bot:
+  write 2-3 greeting tones in the creator's voice and give that bot's setup steps.
+- **Tickets:** with no bot, a `thread_only` channel plus `thread_staff` gives every member private
+  threads only staff can see. For buttons and transcripts, use a ticket bot and write its panel text
+  and niche-specific ticket categories.
+- **Self-assign roles:** create ping roles (`Live Ping`, `Video Drops`, `Events`, `Giveaway Pings`)
+  and interest roles with `none` permissions. Prefer onboarding questions. Otherwise post a
+  `#get-roles` message with `reactions` for a reaction-role bot to use. Point alert bots at the ping
+  roles, never @everyone.
+- **Leveling:** 4-6 tier roles named for the niche; perks through a top-tier lounge
+  (`private_to`) and images/links from tier 2 up (`media_to`). A leveling bot gives the roles.
+- **Giveaways:** a read-only `giveaways` channel, the `Giveaway Pings` role, the announcement and
+  short rules templates, and a giveaway bot. Tell the user that giveaway rules vary by country and
+  the template isn't legal advice. Never suggest pay-to-enter, gambling-style or crypto-prize
+  giveaways.
+
+### 6. Emojis and stickers (optional)
 
 Custom emojis and stickers make a community feel like its own place: the creator's face reactions,
 mascot, catchphrases, inside jokes.
@@ -159,14 +187,14 @@ mascot, catchphrases, inside jokes.
   level 0 (100/150/250 emojis and 15/30/60 stickers at levels 1/2/3). `inspect` shows what's
   free; anything over the limit is skipped with a clear message, never half-uploaded.
 
-### 6. Show the plan and get approval
+### 7. Show the plan and get approval
 
 Run `validate`, fix any ERROR lines, and show the user the printed layout (roles, categories,
 channels, who can see what, emojis, stickers) plus the bot picks with their reasons. Briefly
 mention what each private area is for. Wait for their OK - this changes their real server, and
 it's much easier to change a JSON file than to undo 20 channels.
 
-### 7. Dry run, then apply
+### 8. Dry run, then apply
 
 1. `check` - pick the right server ID from the list.
 2. `apply ... --dry-run` - shows what will be created vs. what already exists.
@@ -187,8 +215,9 @@ When the user wants changes ("rename general to hangout", "make the clips channe
   roles, emojis and stickers). Without `was`, a new name means a new item.
 - **Changes it applies**: topic, slowmode, voice user limit, moving a channel to another category,
   who can see/post (`private_to`, `read_only`, `writers`), role colour/permissions/hoist/
-  mentionable, the order of categories, channels and roles (it follows the blueprint), and the
-  text of the bot's own starter posts (edited in place, so there are no duplicates).
+  mentionable, the order of categories, channels and roles (it follows the blueprint), the
+  text of the bot's own starter posts (edited in place, so there are no duplicates), the `SB · `
+  AutoMod rules, join-message settings, the welcome screen and onboarding questions.
 - **What it leaves alone**: permission rules for roles the blueprint doesn't mention (another
   bot's, or ones the owner set by hand), @everyone itself, roles managed by bots or integrations,
   roles at or above the bot's own role, forum starter posts, and anything not in the blueprint.
@@ -202,7 +231,7 @@ Show the user the change list, get a yes, then run it without `--dry-run`. Edits
 Deleting can't be undone, and messages inside a deleted channel are lost. So:
 
 1. Put exactly what the user named in the blueprint's `"remove": {"channels": [...], "roles": [...],
-   "emojis": [...], "stickers": [...]}` and run `apply --update --dry-run`, or for one-off cleanups
+   "emojis": [...], "stickers": [...], "automod": [...]}` and run `apply --update --dry-run`, or for one-off cleanups
    use `delete --guild ID --channel "name" ...`. Both only list what would go.
 2. Show the user that exact list and get a clear yes.
 3. Re-run with `--confirm-delete`.
@@ -212,21 +241,24 @@ above the bot. Deleting a category keeps its channels; they move out of the cate
 items to `remove` that the user didn't ask to delete.
 
 `undo BLUEPRINT.result.json` removes everything earlier applies of that blueprint created
-(channels, roles, emojis, stickers) and leaves what was already there. Run it with `--dry-run`
+(channels, roles, emojis, stickers, AutoMod rules) and leaves what was already there. Join-message,
+welcome-screen and onboarding settings aren't undone; change them with `--update`. Run it with `--dry-run`
 first and confirm with the user too.
 
-### 8. Common problems
+### 9. Common problems
 
 | Message | Fix |
 |---|---|
 | token was rejected | Reset the token in the Developer Portal, update `.env` |
 | Missing permissions | Re-invite with the `check` link; in Server Settings → Roles drag the bot's role to the top |
 | Not found | The bot isn't in that server, or the ID is wrong - run `check` |
-| "...creating as text/voice" | Community isn't enabled; see step 9, then convert the channel in its settings |
+| "...creating as text/voice" | Community isn't enabled; see step 10, then convert the channel in its settings |
 | "not changed (at or above the bot's own role)" | Drag the bot's role above that role, then run the update again |
 | "emoji/sticker slots are used" | Delete unused ones, boost the server, or upload fewer |
+| "Discord allows 1 ... rule(s) and the server already has ..." | The server has its own AutoMod rule of that type; edit or delete it in Server Settings → AutoMod, then re-run |
+| "onboarding needs 7+ default channels" | Add more default channels to `onboarding.default_channels` (each must be visible to everyone) |
 
-### 9. Finish the setup (things the bot should not do)
+### 10. Finish the setup (things the bot should not do)
 
 Give the user this short checklist, trimmed to what applies:
 
@@ -236,8 +268,8 @@ Give the user this short checklist, trimmed to what applies:
 - **Enable Community** (Server Settings → Enable Community) to unlock announcement channels,
   forums, stages, onboarding and the welcome screen. Without it, those were created as text/voice.
 - **Server icon and banner** for recognition in the server list.
-- **Safety**: Server Settings → Safety Setup → set the verification level to at least Medium and
-  turn on AutoMod spam/keyword filters.
+- **Safety**: Server Settings → Safety Setup → set the verification level to at least Medium
+  (High for teen audiences). The `SB · ` AutoMod rules are already on; check they fit after a week.
 - **Remove the bot's Administrator** once setup is done (Server Settings → Roles → the bot's role),
   or kick it if no more changes are planned. A bot with admin rights is a risk if its token leaks.
 - **Give people roles**: right-click a member → Roles, or let the paid-role bot do it.
@@ -267,9 +299,21 @@ Give the user this short checklist, trimmed to what applies:
         {"name": "announcements", "type": "announcement"}
       ]
     },
+    {"name": "💬 CHAT", "channels": [
+        {"name": "get-roles", "message": "🔴 {@Live Ping}  🎁 {@Giveaway Pings}", "reactions": ["🔴", "🎁"]},
+        {"name": "clips", "media_to": ["Level 5", "Moderator"]},
+        {"name": "open-a-ticket", "thread_only": true, "thread_staff": ["Moderator"], "message": "How to open a ticket..."}
+    ]},
     {"name": "🔒 MEMBERS", "private_to": ["Member", "Admin"], "channels": [{"name": "members-chat"}]}
   ],
-  "remove": {"channels": ["old-channel"], "roles": [], "emojis": [], "stickers": []}
+  "automod": {"level": "standard", "alert_channel": "mod-log", "exempt_roles": ["Moderator", "Admin"],
+              "blocked_words": [], "allowed_words": [], "scam_words": []},
+  "welcome": {"system_channel": "general", "join_messages": true, "boost_messages": true,
+              "screen": {"description": "...", "channels": [{"channel": "rules", "description": "Read first", "emoji": "📜"}]}},
+  "onboarding": {"default_channels": ["welcome", "rules", "general", "..."],
+                 "questions": [{"title": "What do you want pings for?",
+                                "options": [{"title": "Going live", "emoji": "🔴", "roles": ["Live Ping"]}]}]},
+  "remove": {"channels": ["old-channel"], "roles": [], "emojis": [], "stickers": [], "automod": []}
 }
 ```
 
@@ -283,7 +327,12 @@ Give the user this short checklist, trimmed to what applies:
   Text accepts `topic`, `slowmode` (seconds), `message`, `pin`.
 - **Access** (set on a category, overridable per channel): `private_to: [roles]` means only these
   roles see it; `read_only: true` + `writers: [roles]` means everyone can read but only writers
-  post. A channel inherits its category's access unless it sets the same key.
+  post; `thread_only: true` + `thread_staff: [roles]` makes a private-thread ticket channel;
+  `media_to: [roles]` lets only those roles post images and link previews. A channel inherits its
+  category's access unless it sets the same key.
+- **`reactions`** on a channel with a `message`: the bot adds these reactions to its starter post
+  (unicode emojis, or `{:name:}` for server emojis), ready for a reaction-role bot.
+- **`automod`, `welcome`, `onboarding`**: see `references/community-systems.md`.
 - **`was`** on any item renames it during `--update`. **`remove`** only acts with
   `--update --confirm-delete`.
 - A `<blueprint>.result.json` log next to the blueprint collects the IDs of everything created
