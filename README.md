@@ -16,6 +16,11 @@ Claude studies your content (niche, series, audience, tone, how you earn), desig
 - **Self-assign and ping roles**: onboarding questions or a ready `#get-roles` post with reactions for a reaction-role bot
 - **Leveling and giveaways**: tier roles named for your niche, perks like top-tier lounges and image permissions, a giveaways channel, ping role and rules template
 - **Bot recommendations**: the 3–6 bots that best fit *your* community, with invite links and setup steps
+- **Server Health Score**: rates a planned or live server 0–100 (structure, safety, privacy, engagement, clarity) with a concrete fix for every problem; runs automatically after each build
+- **Visual preview**: a Discord-style HTML mockup of the layout before anything is created
+- **Branded emojis**: designs a 6–10 emoji set in your colours and style (generated if your session has an image tool), then resizes, checks and uploads it
+- **Any language**: channel names, rules, posts and filters written natively (Spanish, Portuguese, Hindi, Japanese, Arabic with right-to-left preview, French, German, Indonesian and more)
+- **Share and reuse layouts**: export a live server as a clean blueprint (no IDs, members or invite links) and install community blueprints from [`blueprints/`](blueprints)
 - **Editing later**: rename, move, re-permission, reorder and rewrite posts; it shows a change list first
 - **Safe deletes and undo**: nothing is deleted without your explicit confirmation
 
@@ -41,6 +46,14 @@ Or copy this folder to `~/.claude/skills/discord-server-builder`.
 4. Ask Claude: *"Set up my Discord server for my YouTube channel about ..."*
 
 Claude gives you the bot's invite link, shows you a preview of the layout, runs a dry run, and builds the server only after you approve.
+
+## Ready-made blueprints
+
+Say *"Use the podcast-community blueprint for my server"* and Claude adapts it to you. Blueprints in
+[`blueprints/`](blueprints): indie game dev, podcast community, fitness challenge. The templates
+in `assets/templates` (creator, gaming, digital products, study group, small business, Spanish
+creator community) work the same way. To share your own server's layout, run `export` and open a
+pull request; [blueprints/README.md](blueprints/README.md) explains how.
 
 ## Requirements
 

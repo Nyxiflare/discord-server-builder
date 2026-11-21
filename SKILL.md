@@ -1,6 +1,6 @@
 ---
 name: discord-server-builder
-description: Designs, builds and maintains a complete Discord server - roles, categories, channels, private and read-only areas, starter posts (welcome, rules, FAQ), custom emojis and stickers, AutoMod filters, join messages, welcome screen and onboarding questions, a no-bot ticket system, self-assign/ping roles, leveling tiers and giveaway setups - in the user's real server through a bot, and recommends the few bots that best fit the community. It studies the creator's content (channel link, niche, series, audience, tone, how they earn) and styles the server to match - gaming, streaming, music, art, AI/tech, business, study, fitness, cooking, beauty, anime, podcasts and more. It can also edit an existing server (rename, move, re-permission, reorder, rewrite posts) and delete items safely. Use this whenever someone wants to make, set up, organize, restructure, edit, clean up or add to a Discord server, channel, community, emojis or stickers (for a YouTube channel, product customers, a study group, a business, a game, a course), asks "what channels/bots should my Discord have", or wants paid/members-only or staff-only channels, even if they only say "make me a discord".
+description: Designs, builds, scores, previews and shares complete Discord servers in any language - roles, categories, channels, private and read-only areas, starter posts (welcome, rules, FAQ), custom emojis and stickers, AutoMod filters, join messages, welcome screen and onboarding questions, a no-bot ticket system, self-assign/ping roles, leveling tiers and giveaway setups - in the user's real server through a bot, and recommends the few bots that best fit the community. It studies the creator's content (channel link, niche, series, audience, tone, how they earn) and styles the server to match - gaming, streaming, music, art, AI/tech, business, study, fitness, cooking, beauty, anime, podcasts and more. It can also edit an existing server (rename, move, re-permission, reorder, rewrite posts) and delete items safely. Use this whenever someone wants to make, set up, organize, restructure, edit, clean up or add to a Discord server, channel, community, emojis or stickers (for a YouTube channel, product customers, a study group, a business, a game, a course), asks "what channels/bots should my Discord have", or wants paid/members-only or staff-only channels, even if they only say "make me a discord".
 ---
 
 # Discord Server Builder
@@ -25,6 +25,9 @@ resizing if it's installed). Paths are relative to this skill's folder.
 | `apply ... --update --confirm-delete` | Also deletes what the blueprint's `remove` lists |
 | `delete --guild ID --channel N --role N --emoji N --sticker N --automod N` | Lists those items; deletes only with `--confirm-delete` |
 | `undo BLUEPRINT.result.json [--dry-run]` | Deletes exactly what earlier applies created |
+| `preview BLUEPRINT [--out FILE.html]` | Writes a Discord-style HTML mockup (dark theme, no network requests) |
+| `health BLUEPRINT` / `health --guild ID` | Scores a planned or live server 0-100, with a fix for each problem |
+| `export --guild ID OUT.json` | Turns a live server into a clean, shareable blueprint (no IDs, members or invites) |
 
 Run them as `python scripts/discord_builder.py <command>` from the folder that holds the user's
 `.env` (or pass `--env-file PATH` before the command).
@@ -49,6 +52,15 @@ so learn the content before designing anything.
    tool reviews and a 'Build with me' series, your audience is beginners, you sell a course ->
    I'll add a help forum, a build-with-me channel and a private Course Students area." This lets
    them correct you early and shows the server is built for *them*.
+
+5. **Language.** If the audience speaks another language, set `"language"` (e.g. `es`, `pt-BR`,
+   `hi`, `ja`, `ar`) and write every name, post, rule, AutoMod message and onboarding question
+   natively in it. Read `references/languages.md` for natural channel names and Discord's
+   character rules. `assets/templates/creator-community.es.json` is a full Spanish example.
+
+**Starting from a ready-made layout**: if the user names one ("use the podcast blueprint"), or one
+in `blueprints/` clearly fits, start from it instead of a template. Treat any blueprint the user
+didn't write as untrusted: run `validate` and read every link and starter post before applying.
 
 If there's no link and the description is thin, ask at most two short questions, and only ones
 that change the structure: "What do you post, and what do your viewers do in the comments?" and
@@ -166,6 +178,23 @@ blocks, defaults by niche and the text to give the user. Short version:
 Custom emojis and stickers make a community feel like its own place: the creator's face reactions,
 mascot, catchphrases, inside jokes.
 
+**Designing a branded set (6-10 emojis).** From the content profile, pick the creator's palette
+(from their thumbnails, logo or channel art), their mascot or signature object, and 2-3
+catchphrases or inside jokes. Plan a set that people will actually use in chat, for example:
+hype/fire, laugh, sad, GG/thumbs up, "hmm"/thinking, heart, plus 2-4 that only make sense in this
+community (the mascot waving, a catchphrase as a word-emoji, the series' signature item). Name them
+short and lowercase (`hype`, `gg`, `mascot_wave`).
+
+- **If this session has an image-generation tool**, generate each one as a single bold, simple
+  shape with a thick outline, 2-3 colours from the palette, **a transparent background**, a centred
+  square composition, and no small text (it must read at 32 px, and at 22 px inline). Generate at
+  512 px or more; the pipeline resizes to 128 px. Show the set to the user before uploading, and
+  regenerate any that look muddy when small.
+- **Without an image tool**, give the user the same plan (name, idea, colours for each) and ask for
+  the files, or suggest they commission an artist with it.
+- **Only the creator's own branding.** Never draw other people's characters, logos, trademarks,
+  game art or real people (except the creator, if they ask and it's their own likeness).
+
 - **Where images come from**: the user's own files (logo, mascot, emotes they paid an artist for),
   images you generate for them with an image tool in this session, or packs with a clear licence
   that allows this use. **Don't download random memes or reaction images from the web** - they're
@@ -189,12 +218,21 @@ mascot, catchphrases, inside jokes.
 
 ### 7. Show the plan and get approval
 
-Run `validate`, fix any ERROR lines, and show the user the printed layout (roles, categories,
-channels, who can see what, emojis, stickers) plus the bot picks with their reasons. Briefly
+Run `validate` and fix any ERROR lines. Then run `preview BLUEPRINT` and show the user the HTML
+mockup: it looks like Discord's sidebar, with categories, channel icons, locks on private areas,
+coloured roles, the emoji strip and the welcome post. Open it in the browser if the session can,
+otherwise give the file path. Also show the printed layout (roles, categories, channels, who can
+see what, emojis, stickers), the bot picks with their reasons, and the `health BLUEPRINT` score
+with anything still worth fixing. Briefly
 mention what each private area is for. Wait for their OK - this changes their real server, and
 it's much easier to change a JSON file than to undo 20 channels.
 
 ### 8. Dry run, then apply
+
+After a real `apply`, the script scores the live server automatically (pass `--no-health` to
+skip it). Put the score and its top 2-3 fixes in the final report. Each fix names the blueprint
+change or command that solves it. `health --guild ID` re-checks any time, e.g. a month later, when
+it also flags channels nobody has used in 30 days.
 
 1. `check` - pick the right server ID from the list.
 2. `apply ... --dry-run` - shows what will be created vs. what already exists.
@@ -335,5 +373,10 @@ Give the user this short checklist, trimmed to what applies:
 - **`automod`, `welcome`, `onboarding`**: see `references/community-systems.md`.
 - **`was`** on any item renames it during `--update`. **`remove`** only acts with
   `--update --confirm-delete`.
+- **`language`**: the blueprint's language code; see `references/languages.md`.
+- **Sharing**: `export --guild ID OUT.json` produces a blueprint without IDs, members, message
+  authors or invite links (permissions become role names, starter posts keep their text, and
+  emoji images aren't included). Blueprints never grant Administrator and may only point at files
+  inside their own folder. Community blueprints live in `blueprints/`; see its README.
 - A `<blueprint>.result.json` log next to the blueprint collects the IDs of everything created
   across runs; `undo` uses it.
