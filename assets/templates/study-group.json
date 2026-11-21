@@ -1,0 +1,134 @@
+{
+  "server_name": "Study Group",
+  "roles": [
+    {
+      "name": "Admin",
+      "color": "#E74C3C",
+      "hoist": true,
+      "permissions": "admin"
+    },
+    {
+      "name": "Mentor",
+      "color": "#1ABC9C",
+      "hoist": true,
+      "mentionable": true,
+      "permissions": "moderator"
+    },
+    {
+      "name": "Student",
+      "color": "#3498DB",
+      "permissions": "member"
+    }
+  ],
+  "categories": [
+    {
+      "name": "📌 START HERE",
+      "read_only": true,
+      "writers": [
+        "Admin",
+        "Mentor"
+      ],
+      "channels": [
+        {
+          "name": "welcome",
+          "topic": "How this study group works.",
+          "pin": true,
+          "message": "**Welcome to {server}!** 📚\n\nWe study together, keep each other accountable and help each other understand - not just memorise.\n\n1. Read {#rules}.\n2. Post your goal and exam date in {#introductions}.\n3. Join a 🔊 focus room when you study - cameras optional.\n4. Stuck? Post in {#ask-a-question}. Mentors check daily."
+        },
+        {
+          "name": "rules",
+          "topic": "Group rules.",
+          "pin": true,
+          "message": "**Rules**\n\n1. Be patient and kind - everyone is learning.\n2. **No cheating help** on live exams or graded work. Explaining concepts is fine; doing someone's assignment is not.\n3. Share notes you made yourself; no pirated books or paid course leaks.\n4. Keep focus rooms quiet unless the room says otherwise.\n5. Mentors have the final say."
+        },
+        {
+          "name": "announcements",
+          "type": "announcement",
+          "topic": "Sessions, deadlines and schedule changes."
+        },
+        {
+          "name": "study-schedule",
+          "topic": "Weekly group sessions and exam dates."
+        }
+      ]
+    },
+    {
+      "name": "📖 STUDY",
+      "channels": [
+        {
+          "name": "general",
+          "topic": "Chat with the group."
+        },
+        {
+          "name": "introductions",
+          "topic": "Your name, what you're studying, and your exam date."
+        },
+        {
+          "name": "ask-a-question",
+          "type": "forum",
+          "topic": "One question per post - say what you tried.",
+          "message_title": "How to ask a good question",
+          "message": "Put the topic in the title. Show what you tried and where you got stuck. Mark answered posts with ✅."
+        },
+        {
+          "name": "resources",
+          "read_only": true,
+          "writers": [
+            "Mentor",
+            "Admin"
+          ],
+          "topic": "Curated notes, videos and practice sets."
+        },
+        {
+          "name": "daily-goals",
+          "topic": "Post today's goal in the morning, tick it off at night.",
+          "slowmode": 60
+        },
+        {
+          "name": "wins",
+          "topic": "Passed a test? Finished a chapter? Celebrate here 🎉"
+        }
+      ]
+    },
+    {
+      "name": "🔊 FOCUS ROOMS",
+      "channels": [
+        {
+          "name": "Focus Room 1 (silent)",
+          "type": "voice",
+          "user_limit": 15
+        },
+        {
+          "name": "Focus Room 2 (silent)",
+          "type": "voice",
+          "user_limit": 15
+        },
+        {
+          "name": "Discussion Room",
+          "type": "voice"
+        },
+        {
+          "name": "Group Session",
+          "type": "stage"
+        }
+      ]
+    },
+    {
+      "name": "🛡️ MENTORS",
+      "private_to": [
+        "Mentor",
+        "Admin"
+      ],
+      "channels": [
+        {
+          "name": "mentor-chat",
+          "topic": "Plan sessions and discuss students who need help."
+        },
+        {
+          "name": "mod-log",
+          "topic": "Warnings and removals."
+        }
+      ]
+    }
+  ]
+}

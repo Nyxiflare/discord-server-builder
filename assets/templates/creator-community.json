@@ -1,0 +1,167 @@
+{
+  "server_name": "Creator Community",
+  "roles": [
+    {
+      "name": "Admin",
+      "color": "#E74C3C",
+      "hoist": true,
+      "permissions": "admin"
+    },
+    {
+      "name": "Moderator",
+      "color": "#3498DB",
+      "hoist": true,
+      "mentionable": true,
+      "permissions": "moderator"
+    },
+    {
+      "name": "Supporter",
+      "color": "#F1C40F",
+      "hoist": true,
+      "permissions": "member"
+    },
+    {
+      "name": "Live Ping",
+      "color": "#9B59B6",
+      "mentionable": true,
+      "permissions": "none"
+    },
+    {
+      "name": "Member",
+      "color": "#95A5A6",
+      "permissions": "member"
+    }
+  ],
+  "categories": [
+    {
+      "name": "📌 START HERE",
+      "read_only": true,
+      "writers": [
+        "Admin",
+        "Moderator"
+      ],
+      "channels": [
+        {
+          "name": "welcome",
+          "topic": "Start here - what this place is and how to get around.",
+          "pin": true,
+          "message": "**Welcome to {server}!** 👋\n\nThis is the home for everyone who watches, learns from and builds alongside the channel.\n\n**Get started in 3 steps**\n1. Read {#rules} - it's short.\n2. Say hi in {#introductions}: who you are and what you're working on.\n3. Jump into {#general} and share something you made in {#share-your-work}.\n\nNew videos and drops are posted in {#announcements} first. Glad you're here!"
+        },
+        {
+          "name": "rules",
+          "topic": "Short rules that keep this place good.",
+          "pin": true,
+          "message": "**Rules of {server}**\n\n1. **Be kind.** Critique work, never people. No harassment, hate or slurs.\n2. **No spam or self-promo outside {#share-your-work}.** No unsolicited DMs.\n3. **Keep it on topic** in each channel - check the channel description.\n4. **No NSFW, piracy or illegal content.**\n5. **Don't share private info** - yours or anyone else's.\n6. **Moderators have the final say.** Disagree? Message a Moderator calmly.\n\nBreaking rules: warning → timeout → ban, depending on how serious it is."
+        },
+        {
+          "name": "announcements",
+          "type": "announcement",
+          "topic": "New videos, drops and events."
+        },
+        {
+          "name": "live-now",
+          "type": "text",
+          "topic": "New videos and go-live alerts (from the alert bot). Grab the Live Ping role to get notified."
+        },
+        {
+          "name": "faq",
+          "topic": "Answers to the questions we get most.",
+          "pin": true,
+          "message": "**FAQ**\n\n**How do I become a Supporter?** Support the channel through the membership link in the video descriptions; your role is added within 24 hours.\n**Can I share my own content?** Yes - in {#share-your-work} only.\n**How do I report someone?** Ping {@Moderator} or message one directly."
+        }
+      ]
+    },
+    {
+      "name": "💬 COMMUNITY",
+      "channels": [
+        {
+          "name": "general",
+          "topic": "Hang out and chat about anything (within the rules)."
+        },
+        {
+          "name": "introductions",
+          "topic": "Tell us who you are and what you're working on.",
+          "slowmode": 30
+        },
+        {
+          "name": "share-your-work",
+          "topic": "Show what you made. Feedback welcome - be kind.",
+          "slowmode": 60
+        },
+        {
+          "name": "ideas-and-feedback",
+          "type": "forum",
+          "topic": "Video ideas and feedback - one post per idea.",
+          "message_title": "How to post here",
+          "message": "One idea per post. Give it a clear title and upvote ideas you like with a reaction."
+        },
+        {
+          "name": "off-topic",
+          "topic": "Memes, music, anything else."
+        }
+      ]
+    },
+    {
+      "name": "⭐ SUPPORTERS",
+      "private_to": [
+        "Supporter",
+        "Moderator",
+        "Admin"
+      ],
+      "channels": [
+        {
+          "name": "supporters-chat",
+          "topic": "Thank you for supporting the channel 💛"
+        },
+        {
+          "name": "early-access",
+          "read_only": true,
+          "writers": [
+            "Admin"
+          ],
+          "topic": "Videos and files before anyone else.",
+          "message": "Early cuts, behind-the-scenes and downloads land here first. Please don't share them outside this channel."
+        },
+        {
+          "name": "supporter-qna",
+          "topic": "Ask anything - answered in monthly Q&A."
+        }
+      ]
+    },
+    {
+      "name": "🔊 VOICE",
+      "channels": [
+        {
+          "name": "Lounge",
+          "type": "voice"
+        },
+        {
+          "name": "Co-working",
+          "type": "voice",
+          "user_limit": 10
+        },
+        {
+          "name": "Live Q&A",
+          "type": "stage"
+        }
+      ]
+    },
+    {
+      "name": "🛡️ STAFF",
+      "private_to": [
+        "Moderator",
+        "Admin"
+      ],
+      "channels": [
+        {
+          "name": "mod-chat",
+          "topic": "Staff discussion."
+        },
+        {
+          "name": "mod-log",
+          "topic": "Record warnings, timeouts and bans here: who, what, why."
+        }
+      ]
+    }
+  ]
+}

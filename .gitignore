@@ -1,0 +1,7 @@
+# Never commit bot tokens
+.env
+.env.*
+# Run logs contain server and channel IDs
+*.result.json
+__pycache__/
+*.pyc

@@ -1,0 +1,135 @@
+{
+  "server_name": "Small Business",
+  "roles": [
+    {
+      "name": "Owner",
+      "color": "#E74C3C",
+      "hoist": true,
+      "permissions": "admin"
+    },
+    {
+      "name": "Staff",
+      "color": "#2ECC71",
+      "hoist": true,
+      "mentionable": true,
+      "permissions": "moderator"
+    },
+    {
+      "name": "VIP",
+      "color": "#F1C40F",
+      "hoist": true,
+      "permissions": "member"
+    },
+    {
+      "name": "Customer",
+      "color": "#95A5A6",
+      "permissions": "member"
+    }
+  ],
+  "categories": [
+    {
+      "name": "📌 START HERE",
+      "read_only": true,
+      "writers": [
+        "Owner",
+        "Staff"
+      ],
+      "channels": [
+        {
+          "name": "welcome",
+          "topic": "Who we are and how to use this server.",
+          "pin": true,
+          "message": "**Welcome to {server}!**\n\nThis is the place to get our latest offers first, ask questions and talk to the team directly.\n\n• Offers and new arrivals → {#offers}\n• Questions about products, orders or bookings → {#ask-us}\n• Happy with us? Leave a note in {#reviews} 💬\n\nOpening hours and contact details are in {#info}."
+        },
+        {
+          "name": "rules",
+          "topic": "House rules.",
+          "pin": true,
+          "message": "**House rules**\n\n1. Be polite to staff and other customers.\n2. **Never post payment details, addresses or phone numbers in public channels.** For order problems, message {@Staff} privately.\n3. No spam or advertising other businesses.\n4. Keep complaints constructive - we read everything and will make it right."
+        },
+        {
+          "name": "info",
+          "topic": "Opening hours, location, contact, delivery and returns.",
+          "pin": true,
+          "message": "**Info**\n\n🕒 Hours: (add your opening hours)\n📍 Location: (add address or service area)\n📞 Contact: (add phone / email / website)\n🚚 Delivery & returns: (add your policy)"
+        },
+        {
+          "name": "offers",
+          "type": "announcement",
+          "topic": "Deals, new arrivals and events."
+        }
+      ]
+    },
+    {
+      "name": "🛍️ CUSTOMERS",
+      "channels": [
+        {
+          "name": "general",
+          "topic": "Chat with the community."
+        },
+        {
+          "name": "ask-us",
+          "topic": "Questions about products, orders or bookings - staff reply during opening hours."
+        },
+        {
+          "name": "reviews",
+          "topic": "Tell us how we did.",
+          "slowmode": 120
+        },
+        {
+          "name": "photos",
+          "topic": "Share photos of your purchases."
+        }
+      ]
+    },
+    {
+      "name": "⭐ VIP",
+      "private_to": [
+        "VIP",
+        "Staff",
+        "Owner"
+      ],
+      "channels": [
+        {
+          "name": "vip-deals",
+          "read_only": true,
+          "writers": [
+            "Owner",
+            "Staff"
+          ],
+          "topic": "Early access and VIP-only discounts.",
+          "message": "Thanks for being a regular! VIP-only deals and early access are posted here first."
+        },
+        {
+          "name": "vip-chat",
+          "topic": "Chat with other VIPs and the team."
+        }
+      ]
+    },
+    {
+      "name": "🛡️ TEAM",
+      "private_to": [
+        "Staff",
+        "Owner"
+      ],
+      "channels": [
+        {
+          "name": "team-chat",
+          "topic": "Internal team chat."
+        },
+        {
+          "name": "orders-and-issues",
+          "topic": "Track customer problems until they're solved."
+        },
+        {
+          "name": "shift-schedule",
+          "topic": "Who's on when."
+        },
+        {
+          "name": "Team Call",
+          "type": "voice"
+        }
+      ]
+    }
+  ]
+}

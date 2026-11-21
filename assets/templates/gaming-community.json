@@ -1,0 +1,222 @@
+{
+  "server_name": "Gaming Community",
+  "roles": [
+    {
+      "name": "Admin",
+      "color": "#E74C3C",
+      "hoist": true,
+      "permissions": "admin"
+    },
+    {
+      "name": "Moderator",
+      "color": "#3498DB",
+      "hoist": true,
+      "mentionable": true,
+      "permissions": "moderator"
+    },
+    {
+      "name": "Member+",
+      "color": "#F1C40F",
+      "hoist": true,
+      "permissions": "member"
+    },
+    {
+      "name": "Tournament Player",
+      "color": "#E67E22",
+      "mentionable": true,
+      "permissions": "none"
+    },
+    {
+      "name": "Live Ping",
+      "color": "#9B59B6",
+      "mentionable": true,
+      "permissions": "none"
+    },
+    {
+      "name": "PC",
+      "color": "#7F8C8D",
+      "mentionable": true,
+      "permissions": "none"
+    },
+    {
+      "name": "Console",
+      "color": "#7F8C8D",
+      "mentionable": true,
+      "permissions": "none"
+    },
+    {
+      "name": "Mobile",
+      "color": "#7F8C8D",
+      "mentionable": true,
+      "permissions": "none"
+    },
+    {
+      "name": "Gamer",
+      "color": "#95A5A6",
+      "permissions": "member"
+    }
+  ],
+  "categories": [
+    {
+      "name": "📌 START HERE",
+      "read_only": true,
+      "writers": [
+        "Admin",
+        "Moderator"
+      ],
+      "channels": [
+        {
+          "name": "👋┃welcome",
+          "topic": "Start here.",
+          "pin": true,
+          "message": "**Welcome to {server}!** 🎮\n\nGrab a squad, share your best clips and join game night.\n\n1. Read {#rules}.\n2. Ask a mod for your platform role (**PC / Console / Mobile**) so LFG pings reach you.\n3. Find teammates in {#lfg} and jump into a 🔊 Squad channel.\n4. Drop your best plays in {#clips} - the best one each week gets featured.\n\nGame night is every week - times in {#announcements}."
+        },
+        {
+          "name": "📜┃rules",
+          "topic": "Play fair, be cool.",
+          "pin": true,
+          "message": "**Rules**\n\n1. **No toxicity.** Banter is fine; harassment, slurs and rage-baiting are not.\n2. **No cheats, hacks, exploits or account selling/boosting.**\n3. **Spoilers** for new games/updates only inside ||spoiler tags||.\n4. No spam, ads or random invites. Self-promo only in {#clips}.\n5. Use the right channel - LFG posts go in {#lfg}.\n6. Mods have the final say.\n\nWarning → timeout → ban."
+        },
+        {
+          "name": "📢┃announcements",
+          "type": "announcement",
+          "topic": "Game nights, tournaments, new videos."
+        },
+        {
+          "name": "🛠┃patch-notes",
+          "topic": "Updates for the games we play."
+        }
+      ]
+    },
+    {
+      "name": "🎮 GAMING",
+      "channels": [
+        {
+          "name": "💬┃general",
+          "topic": "Talk games and everything else."
+        },
+        {
+          "name": "🔎┃lfg",
+          "topic": "Looking for group: game, platform, rank, how many players.",
+          "slowmode": 30,
+          "pin": true,
+          "message": "**LFG format**\nGame - Platform - Rank/Level - Players needed - Voice? (yes/no)\nExample: `Valorant - PC - Gold - need 2 - yes`"
+        },
+        {
+          "name": "🎬┃clips",
+          "topic": "Your best (and worst) plays. Clip of the week gets featured.",
+          "slowmode": 60
+        },
+        {
+          "name": "🆙┃level-ups",
+          "read_only": true,
+          "writers": [
+            "Admin",
+            "Moderator"
+          ],
+          "topic": "Level-up messages from the leveling bot. Add the bot's role to writers once it's invited."
+        },
+        {
+          "name": "🖥┃setups",
+          "topic": "Show your battlestation."
+        },
+        {
+          "name": "💡┃suggestions",
+          "type": "forum",
+          "topic": "Ideas for the server, videos and events.",
+          "message_title": "How to suggest",
+          "message": "One idea per post. React 👍 to support ideas you like."
+        },
+        {
+          "name": "😂┃memes",
+          "topic": "Gaming memes only."
+        }
+      ]
+    },
+    {
+      "name": "🏆 EVENTS",
+      "channels": [
+        {
+          "name": "🏆┃tournaments",
+          "read_only": true,
+          "writers": [
+            "Admin",
+            "Moderator"
+          ],
+          "topic": "Brackets, rules and results."
+        },
+        {
+          "name": "🗓┃game-night",
+          "topic": "Vote on this week's game and plan the squad."
+        }
+      ]
+    },
+    {
+      "name": "⭐ MEMBER+",
+      "private_to": [
+        "Member+",
+        "Moderator",
+        "Admin"
+      ],
+      "channels": [
+        {
+          "name": "⭐┃members-chat",
+          "topic": "Thanks for supporting 💛"
+        },
+        {
+          "name": "🎟┃early-access",
+          "read_only": true,
+          "writers": [
+            "Admin"
+          ],
+          "topic": "Videos and giveaways before anyone else."
+        }
+      ]
+    },
+    {
+      "name": "🔊 VOICE",
+      "channels": [
+        {
+          "name": "Squad 1",
+          "type": "voice",
+          "user_limit": 5
+        },
+        {
+          "name": "Squad 2",
+          "type": "voice",
+          "user_limit": 5
+        },
+        {
+          "name": "Squad 3",
+          "type": "voice",
+          "user_limit": 5
+        },
+        {
+          "name": "Chill Lounge",
+          "type": "voice"
+        },
+        {
+          "name": "Stream Watch",
+          "type": "voice"
+        }
+      ]
+    },
+    {
+      "name": "🛡️ STAFF",
+      "private_to": [
+        "Moderator",
+        "Admin"
+      ],
+      "channels": [
+        {
+          "name": "mod-chat",
+          "topic": "Staff discussion."
+        },
+        {
+          "name": "mod-log",
+          "topic": "Warnings, timeouts and bans: who, what, why."
+        }
+      ]
+    }
+  ]
+}
