@@ -1,0 +1,63 @@
+{
+  "server_name": "30-Day Fitness Challenge",
+  "_about": "For a coach or fitness creator running monthly challenges: daily check-ins, form checks, progress photos for members only. Naming: emoji prefix.",
+  "language": "en",
+  "roles": [
+    {"name": "Coach", "color": "#E74C3C", "hoist": true, "permissions": "admin"},
+    {"name": "Moderator", "color": "#3498DB", "hoist": true, "mentionable": true, "permissions": "moderator"},
+    {"name": "Champion", "color": "#FFD700", "hoist": true, "permissions": "none"},
+    {"name": "Athlete", "color": "#E67E22", "permissions": "none"},
+    {"name": "Regular", "color": "#2980B9", "permissions": "none"},
+    {"name": "Challenger", "color": "#2ECC71", "mentionable": true, "permissions": "member"},
+    {"name": "Fat Loss", "color": "#95A5A6", "mentionable": true, "permissions": "none"},
+    {"name": "Muscle", "color": "#95A5A6", "mentionable": true, "permissions": "none"},
+    {"name": "Running", "color": "#95A5A6", "mentionable": true, "permissions": "none"},
+    {"name": "Member", "color": "#95A5A6", "permissions": "member"}
+  ],
+  "categories": [
+    {
+      "name": "📌 START HERE", "read_only": true, "writers": ["Coach", "Moderator"],
+      "channels": [
+        {"name": "👋・welcome", "topic": "How the challenge works.", "pin": true,
+         "message": "**Welcome to {server}!** 💪\n\n1. Read {#rules}.\n2. Pick your goal in {#get-roles}.\n3. Post your check-in every day in {#daily-check-in}.\n4. Unsure about a movement? Ask in {#form-check}.\n\nStreaks earn level roles: Regular → Athlete → Champion."},
+        {"name": "📜・rules", "topic": "Respect, safety, no shortcuts.", "pin": true,
+         "message": "**Rules**\n\n1. **No body shaming.** Everyone starts somewhere.\n2. **Not medical advice.** For injuries, pain or health conditions, see a doctor or physio.\n3. No selling supplements, programmes or anything else.\n4. Progress photos only in the members area, and only your own.\n5. Coaches and moderators have the final say."},
+        {"name": "📢・announcements", "type": "announcement", "topic": "Challenge start dates, weekly themes, live sessions."},
+        {"name": "🎯・get-roles", "topic": "Pick your goal.", "pin": true,
+         "message": "**What's your goal?** React below (pick as many as you like):\n\n🔥 {@Fat Loss}\n💪 {@Muscle}\n🏃 {@Running}",
+         "reactions": ["🔥", "💪", "🏃"]}
+      ]
+    },
+    {
+      "name": "🏋️ CHALLENGE",
+      "channels": [
+        {"name": "✅・daily-check-in", "topic": "What did you do today? One post a day keeps the streak alive.", "slowmode": 600},
+        {"name": "🎥・form-check", "type": "forum", "topic": "Post a short clip; coaches reply within 48 hours.",
+         "message_title": "How to get a form check", "message": "Film from the side, show the whole movement, and say the weight and reps. This isn't medical advice: if something hurts, stop and see a professional."},
+        {"name": "🍳・meals-and-recipes", "topic": "High-protein, budget-friendly, tasty.", "media_to": ["Regular", "Athlete", "Champion", "Challenger", "Moderator", "Coach"]},
+        {"name": "🏆・wins", "topic": "PRs, streaks, non-scale victories."},
+        {"name": "Workout Together", "type": "voice"}
+      ]
+    },
+    {
+      "name": "🔒 MEMBERS", "private_to": ["Challenger", "Moderator", "Coach"],
+      "channels": [
+        {"name": "📸・progress-photos", "topic": "Your own photos only. Never repost anyone else's.", "slowmode": 3600},
+        {"name": "📋・weekly-plans", "read_only": true, "writers": ["Coach"], "topic": "This week's workouts."}
+      ]
+    },
+    {
+      "name": "🛡️ STAFF", "private_to": ["Moderator", "Coach"],
+      "channels": [
+        {"name": "mod-chat", "topic": "Staff discussion."},
+        {"name": "mod-log", "topic": "AutoMod alerts and moderation notes."}
+      ]
+    }
+  ],
+  "automod": {"level": "standard", "alert_channel": "mod-log", "exempt_roles": ["Moderator", "Coach"],
+              "exempt_channels": ["mod-chat", "mod-log"],
+              "scam_words": ["steroids for sale", "sarms for sale", "miracle fat burner", "lose 10kg in a week"],
+              "blocked_words": ["fatty", "landwhale"],
+              "allowed_words": ["butt", "glutes", "chest"]},
+  "welcome": {"system_channel": "daily-check-in", "join_messages": true, "boost_messages": false, "setup_tips": false}
+}

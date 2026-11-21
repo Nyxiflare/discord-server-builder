@@ -1,0 +1,227 @@
+{
+  "server_name": "Indie Game Dev",
+  "_about": "For solo devs and small studios sharing a game in development: devlogs, playtests, feedback and a wishlist push. Naming: emoji prefix.",
+  "language": "en",
+  "roles": [
+    {
+      "name": "Admin",
+      "color": "#E74C3C",
+      "hoist": true,
+      "permissions": "admin"
+    },
+    {
+      "name": "Moderator",
+      "color": "#3498DB",
+      "hoist": true,
+      "mentionable": true,
+      "permissions": "moderator"
+    },
+    {
+      "name": "Playtester",
+      "color": "#2ECC71",
+      "hoist": true,
+      "mentionable": true,
+      "permissions": "member"
+    },
+    {
+      "name": "Devlog Pings",
+      "color": "#9B59B6",
+      "mentionable": true,
+      "permissions": "none"
+    },
+    {
+      "name": "Playtest Pings",
+      "color": "#9B59B6",
+      "mentionable": true,
+      "permissions": "none"
+    },
+    {
+      "name": "Player",
+      "color": "#95A5A6",
+      "permissions": "member"
+    }
+  ],
+  "categories": [
+    {
+      "name": "📌 START HERE",
+      "read_only": true,
+      "writers": [
+        "Admin",
+        "Moderator"
+      ],
+      "channels": [
+        {
+          "name": "👋・welcome",
+          "topic": "What we're making and how to help.",
+          "pin": true,
+          "message": "**Welcome to {server}!** 🎮\n\nWe're building a game in the open, and you can shape it.\n\n1. Read {#rules}.\n2. Pick your pings in {#get-roles}.\n3. Tell us what you'd love to see in {#ideas}.\n4. Want to play early? Sign up in {#playtest-signups}.\n\nNew builds and devlogs land in {#devlogs} first."
+        },
+        {
+          "name": "📜・rules",
+          "topic": "Be kind, give useful feedback.",
+          "pin": true,
+          "message": "**Rules**\n\n1. Be kind. Criticise the game, never people.\n2. **Feedback is gold:** say what you did, what happened and how it felt.\n3. Don't share builds, keys or screenshots marked confidential outside the playtest channels.\n4. No spam or self-promo outside {#show-your-game}.\n5. Moderators have the final say."
+        },
+        {
+          "name": "📢・devlogs",
+          "type": "announcement",
+          "topic": "Devlogs, new builds and release news."
+        },
+        {
+          "name": "🎭・get-roles",
+          "topic": "Pick your pings.",
+          "pin": true,
+          "message": "**Pick your pings** (react to get a role, remove the reaction to drop it):\n\n📰 {@Devlog Pings} - new devlogs\n🧪 {@Playtest Pings} - playtest invites",
+          "reactions": [
+            "📰",
+            "🧪"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "💬 COMMUNITY",
+      "channels": [
+        {
+          "name": "💬・general",
+          "topic": "Chat about the game and games in general."
+        },
+        {
+          "name": "💡・ideas",
+          "type": "forum",
+          "topic": "One idea per post. React 👍 on ideas you want.",
+          "message_title": "How to suggest",
+          "message": "One idea per post, with a clear title. Explain the problem it solves, not just the feature."
+        },
+        {
+          "name": "🎨・fan-art",
+          "topic": "Art, memes and mods inspired by the game.",
+          "slowmode": 30
+        },
+        {
+          "name": "🕹️・show-your-game",
+          "topic": "Fellow devs: share your own project (once a week).",
+          "slowmode": 21600
+        },
+        {
+          "name": "🧪・playtest-signups",
+          "thread_only": true,
+          "thread_staff": [
+            "Moderator",
+            "Admin"
+          ],
+          "topic": "Want to playtest? Open a private thread and tell us your platform and specs.",
+          "pin": true,
+          "message": "**Want to playtest?** Press the Threads button (or +) here, choose **Private Thread**, and tell us your platform, PC specs or device, and how many hours a week you can play. Only you and {@Moderator} can see it."
+        },
+        {
+          "name": "Hangout",
+          "type": "voice"
+        }
+      ]
+    },
+    {
+      "name": "🧪 PLAYTEST",
+      "private_to": [
+        "Playtester",
+        "Moderator",
+        "Admin"
+      ],
+      "channels": [
+        {
+          "name": "📦・builds",
+          "read_only": true,
+          "writers": [
+            "Admin"
+          ],
+          "topic": "Latest playtest builds. Don't share outside this channel.",
+          "pin": true,
+          "message": "Playtest builds are posted here. Please keep them, and screenshots of unreleased content, inside this channel."
+        },
+        {
+          "name": "🐛・bug-reports",
+          "type": "forum",
+          "topic": "One bug per post: steps, what happened, what you expected, build number.",
+          "message_title": "How to report a bug",
+          "message": "Title: short summary. Then: build number, steps to reproduce, what happened, what you expected. Screenshots or clips help a lot."
+        },
+        {
+          "name": "🗣️・playtest-feedback",
+          "topic": "How did it feel? What confused you?"
+        }
+      ]
+    },
+    {
+      "name": "🛡️ STAFF",
+      "private_to": [
+        "Moderator",
+        "Admin"
+      ],
+      "channels": [
+        {
+          "name": "mod-chat",
+          "topic": "Staff discussion."
+        },
+        {
+          "name": "mod-log",
+          "topic": "AutoMod alerts and moderation notes."
+        }
+      ]
+    }
+  ],
+  "automod": {
+    "level": "standard",
+    "alert_channel": "mod-log",
+    "exempt_roles": [
+      "Moderator",
+      "Admin"
+    ],
+    "exempt_channels": [
+      "mod-chat",
+      "mod-log"
+    ],
+    "scam_words": [
+      "free steam keys",
+      "key reseller",
+      "cheap keys",
+      "game testing job"
+    ],
+    "allowed_words": [
+      "kill",
+      "shoot",
+      "headshot",
+      "exploit"
+    ]
+  },
+  "welcome": {
+    "system_channel": "general",
+    "join_messages": true,
+    "boost_messages": true,
+    "setup_tips": false,
+    "screen": {
+      "description": "Help us build the game: devlogs, playtests and feedback.",
+      "channels": [
+        {
+          "channel": "rules",
+          "description": "Read first",
+          "emoji": "📜"
+        },
+        {
+          "channel": "devlogs",
+          "description": "What's new",
+          "emoji": "📢"
+        },
+        {
+          "channel": "ideas",
+          "description": "Suggest features",
+          "emoji": "💡"
+        },
+        {
+          "channel": "get-roles",
+          "description": "Pick your pings",
+          "emoji": "🎭"
+        }
+      ]
+    }
+  }
+}

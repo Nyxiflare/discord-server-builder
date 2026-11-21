@@ -1,0 +1,60 @@
+{
+  "server_name": "Podcast Community",
+  "_about": "For a weekly interview or commentary podcast: episode threads, listener questions read on air, live recordings. Naming: plain.",
+  "language": "en",
+  "roles": [
+    {"name": "Host", "color": "#E74C3C", "hoist": true, "permissions": "admin"},
+    {"name": "Moderator", "color": "#3498DB", "hoist": true, "mentionable": true, "permissions": "moderator"},
+    {"name": "Patron", "color": "#F1C40F", "hoist": true, "permissions": "member"},
+    {"name": "Featured Question", "color": "#E67E22", "hoist": true, "permissions": "none"},
+    {"name": "New Episode Pings", "color": "#9B59B6", "mentionable": true, "permissions": "none"},
+    {"name": "Live Recording Pings", "color": "#9B59B6", "mentionable": true, "permissions": "none"},
+    {"name": "Listener", "color": "#95A5A6", "permissions": "member"}
+  ],
+  "categories": [
+    {
+      "name": "📌 START HERE", "read_only": true, "writers": ["Host", "Moderator"],
+      "channels": [
+        {"name": "welcome", "topic": "Start here.", "pin": true,
+         "message": "**Welcome to the {server} listener lounge!** 🎙️\n\n1. Read {#rules}.\n2. Talk about each episode in {#episode-discussion}.\n3. Want your question read on air? Post it in {#ask-the-hosts}.\n4. Get pinged for new episodes and live recordings in {#get-roles}."},
+        {"name": "rules", "topic": "Debate ideas, not people.", "pin": true,
+         "message": "**Rules**\n\n1. Debate ideas, never people. No harassment of guests, hosts or other listeners.\n2. Spoilers for unreleased episodes stay in the Patron area.\n3. No spam or self-promo.\n4. Moderators have the final say."},
+        {"name": "new-episodes", "type": "announcement", "topic": "Every new episode, the moment it's out."},
+        {"name": "get-roles", "topic": "Pick your pings.", "pin": true,
+         "message": "React to get pinged:\n\n🎧 {@New Episode Pings} - new episodes\n🔴 {@Live Recording Pings} - live recordings",
+         "reactions": ["🎧", "🔴"]}
+      ]
+    },
+    {
+      "name": "💬 LISTENERS",
+      "channels": [
+        {"name": "general", "topic": "Chat with other listeners."},
+        {"name": "episode-discussion", "type": "forum", "topic": "One post per episode.",
+         "message_title": "How this works", "message": "Each episode gets its own post. Keep comments about that episode in its post."},
+        {"name": "ask-the-hosts", "topic": "Questions for the next episode. The best ones get read on air.", "slowmode": 300},
+        {"name": "topic-suggestions", "topic": "Guests and topics you want covered."},
+        {"name": "hot-takes", "topic": "Spicy opinions, one at a time.", "slowmode": 120},
+        {"name": "Listening Lounge", "type": "voice"},
+        {"name": "Live Recording", "type": "stage"}
+      ]
+    },
+    {
+      "name": "⭐ PATRONS", "private_to": ["Patron", "Moderator", "Host"],
+      "channels": [
+        {"name": "patron-chat", "topic": "Thank you for supporting the show."},
+        {"name": "early-episodes", "read_only": true, "writers": ["Host"], "topic": "Ad-free and early episodes."}
+      ]
+    },
+    {
+      "name": "🛡️ STAFF", "private_to": ["Moderator", "Host"],
+      "channels": [
+        {"name": "mod-chat", "topic": "Staff discussion."},
+        {"name": "mod-log", "topic": "AutoMod alerts and moderation notes."},
+        {"name": "question-shortlist", "topic": "Pick questions for the next episode."}
+      ]
+    }
+  ],
+  "automod": {"level": "standard", "alert_channel": "mod-log", "exempt_roles": ["Moderator", "Host"],
+              "exempt_channels": ["mod-chat", "mod-log"], "scam_words": ["guest spot for sale", "pay to be featured"]},
+  "welcome": {"system_channel": "general", "join_messages": true, "boost_messages": true, "setup_tips": false}
+}
