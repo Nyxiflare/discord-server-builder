@@ -14,6 +14,9 @@ Commands
   delete --guild ID [--channel N] [--role N] [--emoji N] [--sticker N] [--automod N] [--confirm-delete]
                                       delete named items; without --confirm-delete it only lists them
   undo RESULT.json [--dry-run]        delete exactly what earlier applies created
+  health [BLUEPRINT] [--guild ID]     score a planned layout or a live server 0-100, with fixes
+  export --guild ID OUT.json          turn a live server into a clean, shareable blueprint (no IDs)
+  preview BLUEPRINT [--out FILE]      write a Discord-style HTML mockup (no network requests)
 
 The bot token is read from the DISCORD_BOT_TOKEN environment variable, or from a .env file
 (the current folder, or --env-file PATH). It is never printed.
@@ -299,7 +302,8 @@ def load_blueprint(path: str):
             if bad:
                 errors.append(f"Role '{n}': unknown permissions {bad}.")
             if any(str(x).upper() == "ADMINISTRATOR" for x in p):
-                warnings.append(f"Role '{n}' gets ADMINISTRATOR (full control). Only give it to people you fully trust.")
+                errors.append(f"Role '{n}' grants ADMINISTRATOR. Blueprints can be shared, so they never grant it: "
+                              "use the 'admin' preset, and give Administrator to your own role by hand in Discord.")
         else:
             errors.append(f"Role '{n}': permissions must be a preset name or a list.")
         if "color" in r:
@@ -495,6 +499,42 @@ def load_blueprint(path: str):
                 warnings.append("onboarding: Discord needs at least 7 default channels to turn onboarding on; "
                                 "with fewer, the questions are saved but onboarding stays off.")
             warnings.append("Onboarding only works once Community is enabled; it is skipped otherwise.")
+
+    # ---- shared blueprints are untrusted input
+    for kind, items in (("emoji", bp.get("emojis", [])), ("sticker", bp.get("stickers", []))):
+        for it in items:
+            f = str(it.get("file", ""))
+            target = (base / f).resolve() if f else None
+            if f and (Path(f).is_absolute() or ".." in Path(f).parts or (target and base not in target.parents)):
+                errors.append(f"{kind} '{it.get('name')}': file must be inside the blueprint's folder (got {f!r}).")
+    texts = []
+    for c in bp.get("categories", []):
+        for ch in c.get("channels", []):
+            texts += [ch.get("message", ""), ch.get("topic", "")]
+    for ch in bp.get("channels", []):
+        texts += [ch.get("message", ""), ch.get("topic", "")]
+    texts += [str(((bp.get("welcome") or {}).get("screen") or {}).get("description", "")),
+              str((bp.get("automod") or {}).get("block_message", ""))]
+    blob = "\n".join(t for t in texts if t)
+    invites = sorted(set(re.findall(r"(?i)(?:discord\.gg|discord(?:app)?\.com/invite)/[A-Za-z0-9-]+", blob)))
+    if invites:
+        warnings.append(f"Starter posts contain Discord invite links ({', '.join(invites[:3])}). Check they're yours before applying.")
+    hosts = sorted(set(h.lower() for h in re.findall(r"https?://([^/\s)>\]]+)", blob)))
+    if hosts:
+        warnings.append(f"Starter posts link to: {', '.join(hosts[:8])}. Check every link before applying a shared blueprint.")
+    if re.search(r"@(everyone|here)\b", blob):
+        warnings.append("Starter posts mention @everyone/@here as text; the bot never pings, but check the wording.")
+
+    lang = bp.get("language")
+    if lang is not None and not re.fullmatch(r"[a-z]{2,3}(-[A-Za-z0-9]{2,8})*", str(lang)):
+        errors.append(f"language '{lang}' should be a code like es, pt-BR, hi, ja, ar.")
+    stripped = set("!\"#$%&'()*+,./:;<=>?@[\\]^`{|}~")
+    for c in bp.get("categories", []):
+        for ch in c.get("channels", []):
+            if family(ch.get("type", "text")) == "text":
+                bad = sorted({x for x in ch.get("name", "") if x in stripped})
+                if bad:
+                    warnings.append(f"{c['name']}/{ch['name']}: Discord removes {' '.join(bad)} from text channel names.")
 
     rm = bp.get("remove")
     if rm is not None:
@@ -1888,7 +1928,606 @@ def cmd_apply(args, client: Client | None = None) -> int:
         merged["problems"] = problems
         log.write_text(json.dumps(merged, indent=2, ensure_ascii=False), encoding="utf-8")
         out(f"Log saved to {log}")
+    if not getattr(args, "no_health", False):
+        try:
+            if dry:
+                model = model_from_blueprint(bp)
+            else:
+                model = model_from_live(fetch_server(client, gid), client, gid)
+            out("\n" + health_text(score_health(model), short=True))
+        except Exception as e:  # the health check must never break a build
+            out(f"\n(health check skipped: {e})")
     return 1 if problems else 0
+
+
+# --------------------------------------------------------------------------- health score
+
+VIEW_BIT, SEND_BIT, CONNECT_BIT = perm("VIEW_CHANNEL"), perm("SEND_MESSAGES"), perm("CONNECT")
+# Channel-name words the health check looks for, in the languages references/languages.md covers.
+HEALTH_WORDS = {
+    "rules": ("rules", "normas", "reglas", "regras", "règles", "regles", "regeln", "peraturan", "ルール",
+              "القوانين", "قوانين", "नियम", "niyam"),
+    "welcome": ("welcome", "start", "bienvenida", "bienvenid", "empieza", "boas-vindas", "bienvenue", "willkommen",
+                "selamat-datang", "ようこそ", "الترحيب", "ترحيب", "स्वागत", "swagat"),
+    "announcement": ("announcement", "anuncio", "avisos", "annonce", "ankündigung", "pengumuman", "お知らせ",
+                     "الإعلانات", "إعلانات", "घोषणा", "news", "devlog", "new-episode", "updates", "changelog"),
+    "log": ("log", "registro", "journal", "protokoll", "catatan", "ログ", "سجل"),
+}
+INFO_WORDS = HEALTH_WORDS["rules"] + HEALTH_WORDS["welcome"] + HEALTH_WORDS["announcement"] + ("info", "faq")
+
+
+def has_word(name: str, key: str) -> bool:
+    n = name.lower()
+    return any(w in n for w in HEALTH_WORDS[key])
+
+
+def access_from_overwrites(ows, gid: str, rname: dict) -> dict:
+    """Read Discord permission overwrites back into blueprint access keys (private_to, read_only, ...)."""
+    m = ow_map(ows)
+    ev_a, ev_d = m.get(str(gid), (0, 0))
+
+    def names(bit):
+        return sorted(rname[i] for i, (a, d) in m.items() if i != str(gid) and i in rname and a & bit)
+    acc = {}
+    if ev_d & VIEW_BIT:
+        acc["private_to"] = names(VIEW_BIT)
+    if ev_a & perm("CREATE_PRIVATE_THREADS") and ev_d & SEND_BIT:
+        acc["thread_only"] = True
+        if names(perm("MANAGE_THREADS")):
+            acc["thread_staff"] = names(perm("MANAGE_THREADS"))
+    elif ev_d & (SEND_BIT | CONNECT_BIT):
+        acc["read_only"] = True
+        w = sorted(set(names(SEND_BIT)) | set(names(CONNECT_BIT)))
+        if w:
+            acc["writers"] = w
+    if ev_d & perm("ATTACH_FILES"):
+        acc["media_to"] = names(perm("ATTACH_FILES"))
+    return acc
+
+
+def snowflake_days(sid) -> float | None:
+    try:
+        ms = (int(sid) >> 22) + 1420070400000
+    except (TypeError, ValueError):
+        return None
+    return (time.time() * 1000 - ms) / 86400000
+
+
+def model_from_blueprint(bp: dict) -> dict:
+    chans, cats = [], []
+    for ch in bp.get("channels", []):
+        chans.append({"name": ch["name"], "type": ch.get("type", "text"), "topic": ch.get("topic", ""),
+                      "category": None, "access": merged_access(None, ch), "idle_days": None})
+    for c in bp.get("categories", []):
+        cats.append({"name": c["name"], "access": merged_access(None, c)})
+        for ch in c.get("channels", []):
+            chans.append({"name": ch["name"], "type": ch.get("type", "text"), "topic": ch.get("topic", ""),
+                          "category": c["name"], "access": merged_access(c, ch), "idle_days": None})
+    am = bp.get("automod")
+    kinds = set()
+    if am:
+        kinds = {r["trigger_type"] for r in automod_rules(am, lambda n: "x", {}, lambda m: None)}
+    self_roles = bool(bp.get("onboarding")) or any(ch.get("reactions") for c in bp.get("categories", []) for ch in c.get("channels", []))
+    return {"source": "blueprint", "members": None, "everyone_perms": None, "bot_below": None,
+            "roles": [{"name": r["name"], "perms": role_permissions(r), "managed": False} for r in bp.get("roles", [])],
+            "channels": chans, "categories": cats, "automod": kinds,
+            "automod_presets": (AM_LEVELS[am.get("level", "standard")]["presets"] if am else []),
+            "emojis": len(bp.get("emojis", [])), "stickers": len(bp.get("stickers", [])), "emoji_cap": 50,
+            "self_roles": self_roles, "language": bp.get("language")}
+
+
+def model_from_live(s: dict, client, gid: str) -> dict:
+    roles = s["roles"]
+    rname = {r["id"]: r["name"] for r in roles if not r.get("managed") and r["id"] != gid}
+    by_id = {c["id"]: c for c in s["channels"]}
+    chans, cats = [], []
+    for c in s["channels"]:
+        tname = TYPE_NAMES.get(c["type"], "text")
+        acc = access_from_overwrites(c.get("permission_overwrites", []), gid, rname)
+        if tname == "category":
+            cats.append({"name": c["name"], "access": acc, "id": c["id"]})
+            continue
+        idle = None
+        if family(tname) == "text" and tname != "forum":
+            idle = snowflake_days(c.get("last_message_id")) if c.get("last_message_id") else snowflake_days(c["id"])
+        parent = by_id.get(c.get("parent_id"))
+        chans.append({"name": c["name"], "type": tname, "topic": c.get("topic") or "",
+                      "category": parent["name"] if parent else None, "access": acc, "idle_days": idle})
+    try:
+        g = client.call("GET", f"/guilds/{gid}?with_counts=true") or {}
+    except DiscordError:
+        g = {}
+    everyone = next((r for r in roles if r["id"] == gid), {})
+    tier = s["guild"].get("premium_tier", 0)
+    bot_top = s.get("bot_top") or (0, 0)
+    above = [r["name"] for r in roles if not r.get("managed") and r["id"] != gid and rank(r) >= bot_top
+             and not int(r.get("permissions", 0)) & ADMIN_BIT]
+    rule_names = [r["name"] for r in s.get("automod", [])]
+    preset = next((r for r in s.get("automod", []) if r["trigger_type"] == AM_PRESET), None)
+    has_onboarding = any("roles" in c["name"] for c in s["channels"])
+    return {"source": "live", "members": g.get("approximate_member_count"),
+            "everyone_perms": int(everyone.get("permissions", 0)), "bot_below": above,
+            "roles": [{"name": r["name"], "perms": int(r.get("permissions", 0)), "managed": bool(r.get("managed"))}
+                      for r in roles if r["id"] != gid],
+            "channels": chans, "categories": cats, "automod": {r["trigger_type"] for r in s.get("automod", [])},
+            "automod_presets": (preset or {}).get("trigger_metadata", {}).get("presets", []),
+            "automod_names": rule_names,
+            "emojis": len(s["emojis"]), "stickers": len(s["stickers"]), "emoji_cap": EMOJI_SLOTS.get(tier, 50),
+            "self_roles": has_onboarding, "language": None,
+            "server_age_days": snowflake_days(gid)}
+
+
+def score_health(m: dict) -> dict:
+    """Score a server (live or planned) 0-100 with sections, findings and concrete fixes."""
+    sections = {k: {"max": v, "lost": 0, "items": []} for k, v in
+                (("Structure", 25), ("Safety", 35), ("Privacy", 15), ("Engagement", 15), ("Clarity", 10))}
+
+    def ok(sec, text):
+        sections[sec]["items"].append(("ok", text, ""))
+
+    def bad(sec, pts, text, fix):
+        s = sections[sec]
+        pts = min(pts, s["max"] - s["lost"])
+        s["lost"] += pts
+        s["items"].append(("bad" if pts else "info", text, fix))
+
+    texts = [c for c in m["channels"] if family(c["type"]) == "text"]
+    voices = [c for c in m["channels"] if family(c["type"]) == "voice"]
+    members = m.get("members")
+    size = "new" if members is None else f"~{members} members"
+    ideal = 18 if not members or members < 100 else 28 if members < 1000 else 45
+    if len(texts) > ideal:
+        bad("Structure", min(10, len(texts) - ideal), f"{len(texts)} text channels for a {size} server feels empty (aim for {ideal} or fewer)",
+            "merge quiet channels: remove them from the blueprint's categories and list them in \"remove\", then apply --update --confirm-delete")
+    else:
+        ok("Structure", f"{len(texts)} text channels - a good size for a {size} server")
+    if (members is None or members < 100) and len(voices) > 5:
+        bad("Structure", 3, f"{len(voices)} voice channels; small servers rarely fill more than 2-3",
+            "keep 2-3 general voice channels; remove the rest via \"remove\" + apply --update --confirm-delete")
+    for word, pts, label in (("rules", 5, "rules"), ("welcome", 4, "welcome"), ("announcement", 3, "announcements")):
+        if any(has_word(c["name"], word) for c in texts):
+            ok("Structure", f"has {'an' if label[0] in 'aeiou' else 'a'} {label} channel")
+        else:
+            bad("Structure", pts, f"no {label} channel", f"add a '{label}' channel to START HERE in the blueprint and run apply")
+
+    # ---- safety
+    am = m["automod"]
+    if not am:
+        bad("Safety", 14, "no AutoMod rules - scams and slurs aren't filtered",
+            "add an \"automod\" block (references/community-systems.md, section 1) and run apply")
+    else:
+        for t, pts, label in ((AM_PRESET, 4, "slur/adult-content filter"), (AM_KEYWORD, 4, "scam/keyword filter"),
+                              (AM_MENTION, 3, "mention-spam protection"), (AM_SPAM, 2, "spam filter")):
+            if t in am:
+                ok("Safety", f"AutoMod {label} on")
+            else:
+                bad("Safety", pts, f"no AutoMod {label}", "add or complete the \"automod\" block and run apply --update")
+        if am and AM_PRESET_SLURS not in (m.get("automod_presets") or [AM_PRESET_SLURS]):
+            bad("Safety", 2, "the preset filter doesn't block slurs", "use at least the 'relaxed' AutoMod level")
+    ev = m.get("everyone_perms")
+    if ev is not None:
+        if ev & perm("MENTION_EVERYONE"):
+            bad("Safety", 6, "@everyone can ping @everyone/@here (a favourite of raiders)",
+                "Server Settings > Roles > @everyone > turn off 'Mention @everyone, @here and All Roles'")
+        else:
+            ok("Safety", "members can't mass-ping")
+        if ev & ADMIN_BIT:
+            bad("Safety", 15, "@everyone has Administrator!", "Server Settings > Roles > @everyone > turn off Administrator now")
+    info_open = [c["name"] for c in texts if any(w in c["name"].lower() for w in INFO_WORDS)
+                 and not (c["access"].get("read_only") or c["access"].get("private_to") or c["access"].get("thread_only"))]
+    if info_open:
+        bad("Safety", min(6, 2 * len(info_open)), f"anyone can post in info channels: {', '.join(info_open[:4])}",
+            "set \"read_only\": true with \"writers\" on START HERE and run apply --update")
+    elif texts:
+        ok("Safety", "info channels are read-only")
+    admins = [r["name"] for r in m["roles"] if r["perms"] & ADMIN_BIT and not r["managed"]]
+    if len(admins) > 1:
+        bad("Safety", 4, f"{len(admins)} human roles have Administrator: {', '.join(admins[:4])}",
+            "keep Administrator on one owner role; give staff the 'admin'/'moderator' presets instead (apply --update)")
+    bot_admins = [r["name"] for r in m["roles"] if r["perms"] & ADMIN_BIT and r["managed"]]
+    if bot_admins and m["source"] == "live":
+        bad("Safety", 2, f"bots with Administrator: {', '.join(bot_admins[:4])}",
+            "after setup, remove Administrator from bot roles in Server Settings > Roles")
+    if m.get("bot_below"):
+        bad("Safety", 3, f"the builder bot sits below roles it may need to manage: {', '.join(m['bot_below'][:4])}",
+            "Server Settings > Roles: drag the bot's role above them (or ignore if you won't edit them)")
+    staff_log = [c for c in texts if has_word(c["name"], "log")]
+    if not staff_log:
+        bad("Safety", 4, "no mod-log channel for AutoMod alerts and staff notes",
+            "add a 'mod-log' channel to a private STAFF category and set automod.alert_channel to it")
+    elif not any(c["access"].get("private_to") for c in staff_log):
+        bad("Safety", 4, "the mod-log channel is visible to everyone", "put it in a category with \"private_to\": [staff roles]")
+    else:
+        ok("Safety", "private mod-log exists")
+
+    # ---- privacy
+    private_cats = {c["name"]: c for c in m["categories"] if c["access"].get("private_to")}
+    leaks = [c["name"] for c in m["channels"] if c["category"] in private_cats and not c["access"].get("private_to")]
+    if leaks:
+        bad("Privacy", min(15, 5 * len(leaks)), f"channels inside private categories are visible to everyone: {', '.join(leaks[:4])}",
+            "run apply --update with the category's private_to (channels inherit it), or sync permissions in channel settings")
+    elif private_cats:
+        ok("Privacy", f"{len(private_cats)} private categor{'y' if len(private_cats) == 1 else 'ies'}, no leaks")
+    else:
+        ok("Privacy", "no private areas to check")
+
+    # ---- engagement
+    cap = m.get("emoji_cap", 50)
+    if m["emojis"] < 5:
+        bad("Engagement", 4, f"only {m['emojis']} custom emoji(s) of {cap} free slots",
+            "design 6-10 branded emojis (SKILL.md step 6) and add them to the blueprint's \"emojis\"")
+    else:
+        ok("Engagement", f"{m['emojis']} custom emojis")
+    if m["stickers"] == 0:
+        bad("Engagement", 1, "no stickers", "add 1-5 stickers (catchphrases, mascot) to \"stickers\"")
+    if not m["self_roles"]:
+        bad("Engagement", 3, "no way to pick ping/interest roles", "add onboarding questions or a #get-roles post with reactions")
+    else:
+        ok("Engagement", "members can pick their own roles")
+    if m["source"] == "live" and (m.get("server_age_days") or 0) > 14:
+        idle = [c["name"] for c in texts if c["idle_days"] is not None and c["idle_days"] > 30]
+        if idle:
+            bad("Engagement", min(6, len(idle)), f"{len(idle)} channel(s) quiet for 30+ days: {', '.join(idle[:5])}",
+                "merge or remove them (\"remove\" + apply --update --confirm-delete), or give them a weekly ritual")
+        else:
+            ok("Engagement", "every text channel was used in the last 30 days")
+
+    # ---- clarity
+    no_topic = [c["name"] for c in texts if not c["topic"] and c["type"] != "forum"]
+    if texts and len(no_topic) / len(texts) > 0.3:
+        bad("Clarity", min(6, len(no_topic) // 2 + 1), f"{len(no_topic)} of {len(texts)} text channels have no topic",
+            "add a one-line \"topic\" to each channel and run apply --update")
+    else:
+        ok("Clarity", "channels explain what they're for")
+    if len(m["categories"]) == 0 and len(m["channels"]) > 6:
+        bad("Clarity", 4, "no categories", "group channels into 3-6 categories in the blueprint")
+
+    total = 100 - sum(s["lost"] for s in sections.values())
+    return {"score": max(0, total), "sections": sections, "source": m["source"]}
+
+
+def health_text(h: dict, short: bool = False) -> str:
+    grade = "excellent" if h["score"] >= 90 else "good" if h["score"] >= 75 else "needs work" if h["score"] >= 55 else "at risk"
+    lines = [f"Server health: {h['score']}/100 ({grade}){' - planned layout' if h['source'] == 'blueprint' else ''}"]
+    fixes = []
+    for name, s in h["sections"].items():
+        lines.append(f"  {name}: {s['max'] - s['lost']}/{s['max']}")
+        for kind, text, fix in s["items"]:
+            if kind == "ok":
+                if not short:
+                    lines.append(f"    ✓ {text}")
+            else:
+                lines.append(f"    ✗ {text}")
+                fixes.append(f"  - {text}: {fix}")
+    if fixes:
+        lines.append("Fixes:")
+        lines += fixes
+    return "\n".join(lines)
+
+
+def cmd_health(args, client: Client | None = None) -> int:
+    if args.blueprint:
+        bp, errors, _ = load_blueprint(args.blueprint)
+        for e in errors:
+            out(f"ERROR: {e}")
+        h = score_health(model_from_blueprint(bp))
+    else:
+        if not args.guild:
+            sys.exit("Give a BLUEPRINT file, or --guild ID to check a live server.")
+        client = client or Client(load_token(args.env_file))
+        try:
+            s = fetch_server(client, args.guild)
+        except DiscordError as e:
+            out(explain(e))
+            return 1
+        out(f"Server: {s['guild']['name']}")
+        h = score_health(model_from_live(s, client, args.guild))
+    out(health_text(h))
+    return 0
+
+
+# --------------------------------------------------------------------------- export (live server -> shareable blueprint)
+
+ID_RE = re.compile(r"\b\d{17,20}\b")
+INVITE_RE = re.compile(r"(?i)(?:https?://)?(?:www\.)?(?:discord\.gg|discord(?:app)?\.com/invite)/[A-Za-z0-9-]+")
+
+
+def perms_to_spec(value: int):
+    for name in ("member", "moderator", "admin"):
+        if perm(*PRESETS[name]) == value:
+            return name
+    if value == 0:
+        return "none"
+    return [n for n, b in sorted(BITS.items(), key=lambda kv: kv[1]) if value & (1 << b)]
+
+
+def cmd_export(args, client: Client | None = None) -> int:
+    client = client or Client(load_token(args.env_file))
+    gid = args.guild
+    try:
+        s = fetch_server(client, gid)
+    except DiscordError as e:
+        out(explain(e))
+        return 1
+    guild, roles, chans = s["guild"], s["roles"], s["channels"]
+    bot_id = s["me"]["id"]
+    community = "COMMUNITY" in guild.get("features", [])
+    rname = {r["id"]: r["name"] for r in roles if not r.get("managed") and r["id"] != gid}
+    cname = {c["id"]: c["name"] for c in chans}
+    ename = {e["id"]: e["name"] for e in s["emojis"]}
+
+    def clean(text: str) -> str:
+        text = re.sub(r"<#(\d+)>", lambda m: "{#" + cname[m.group(1)] + "}" if m.group(1) in cname else "#channel", text or "")
+        text = re.sub(r"<@&(\d+)>", lambda m: "{@" + rname[m.group(1)] + "}" if m.group(1) in rname else "@role", text)
+        text = re.sub(r"<@!?\d+>", "@member", text)
+        text = re.sub(r"<a?:(\w{2,32}):\d+>", lambda m: "{:" + m.group(1) + ":}", text)
+        text = INVITE_RE.sub("(invite link removed)", text)
+        return ID_RE.sub("", text)
+
+    bp: dict = {"server_name": guild["name"], "_exported_from": "discord-server-builder export",
+                "roles": [], "categories": []}
+    for r in sorted((r for r in roles if r["id"] in rname), key=rank, reverse=True):
+        item = {"name": r["name"], "permissions": perms_to_spec(int(r.get("permissions", 0)))}
+        if r.get("color"):
+            item["color"] = f"#{r['color']:06X}"
+        for k in ("hoist", "mentionable"):
+            if r.get(k):
+                item[k] = True
+        if int(r.get("permissions", 0)) & ADMIN_BIT:
+            item["permissions"] = "admin"
+            item["_note"] = "had Administrator; exported as the 'admin' preset (shared blueprints never grant Administrator)"
+        bp["roles"].append(item)
+
+    def channel_item(c, parent_acc):
+        tname = TYPE_NAMES.get(c["type"], "text")
+        it = {"name": c["name"]}
+        if tname != "text":
+            it["type"] = tname
+        if c.get("topic"):
+            it["topic"] = clean(c["topic"])
+        if c.get("rate_limit_per_user"):
+            it["slowmode"] = c["rate_limit_per_user"]
+        if tname == "voice" and c.get("user_limit"):
+            it["user_limit"] = c["user_limit"]
+        acc = access_from_overwrites(c.get("permission_overwrites", []), gid, rname)
+        for k in ACCESS_KEYS:
+            if k in acc and acc[k] != (parent_acc or {}).get(k):
+                it[k] = acc[k]
+            elif k not in acc and (parent_acc or {}).get(k):
+                it[k] = [] if isinstance(parent_acc[k], list) else False
+        if family(tname) == "text" and tname != "forum":
+            try:
+                msgs = client.call("GET", f"/channels/{c['id']}/messages?limit=50") or []
+            except DiscordError:
+                msgs = []
+            mine = sorted([m for m in msgs if m.get("author", {}).get("id") == bot_id and m.get("type", 0) == 0],
+                          key=lambda m: int(m["id"]))
+            if mine:
+                it["message"] = "\n".join(clean(m["content"]) for m in mine)
+                if mine[0].get("pinned"):
+                    it["pin"] = True
+                reacts = []
+                for rr in mine[0].get("reactions", []):
+                    e = rr.get("emoji") or {}
+                    if rr.get("me"):
+                        reacts.append("{:" + e["name"] + ":}" if e.get("id") else e.get("name"))
+                if reacts:
+                    it["reactions"] = reacts
+        return it
+
+    def order(cs):
+        return sorted(cs, key=lambda c: (family(TYPE_NAMES.get(c["type"], "text")) == "voice", c["position"], int(c["id"])))
+    top = [c for c in chans if not c.get("parent_id") and c["type"] != 4]
+    if top:
+        bp["channels"] = [channel_item(c, None) for c in order(top)]
+    for cat in sorted((c for c in chans if c["type"] == 4), key=lambda c: (c["position"], int(c["id"]))):
+        acc = access_from_overwrites(cat.get("permission_overwrites", []), gid, rname)
+        item = {"name": cat["name"], **acc,
+                "channels": [channel_item(c, acc) for c in order([x for x in chans if x.get("parent_id") == cat["id"]])]}
+        bp["categories"].append(item)
+
+    sb = {r["name"]: r for r in s.get("automod", []) if r["name"].startswith(AM_PREFIX)}
+    if sb:
+        pre = sb.get(AM_PREFIX + "Slurs & adult content", {}).get("trigger_metadata", {}).get("presets", [])
+        level = next((k for k, v in AM_LEVELS.items() if sorted(v["presets"]) == sorted(pre)), "standard")
+        any_rule = next(iter(sb.values()))
+        alert = next((a["metadata"].get("channel_id") for a in any_rule.get("actions", []) if a["type"] == 2), None)
+        am = {"level": level}
+        if alert in cname:
+            am["alert_channel"] = cname[alert]
+        am["exempt_roles"] = [rname[i] for i in any_rule.get("exempt_roles", []) if i in rname]
+        am["exempt_channels"] = [cname[i] for i in any_rule.get("exempt_channels", []) if i in cname]
+        bw = sb.get(AM_PREFIX + "Blocked words", {}).get("trigger_metadata", {}).get("keyword_filter", [])
+        if bw:
+            am["blocked_words"] = bw
+        aw = sb.get(AM_PREFIX + "Slurs & adult content", {}).get("trigger_metadata", {}).get("allow_list", [])
+        if aw:
+            am["allowed_words"] = aw
+        sw = [w for w in sb.get(AM_PREFIX + "Scams, invites & spam links", {}).get("trigger_metadata", {}).get("keyword_filter", [])
+              if w not in AM_SCAM_WORDS]
+        if sw:
+            am["scam_words"] = sw
+        bp["automod"] = am
+    if guild.get("system_channel_id") in cname:
+        flags = int(guild.get("system_channel_flags") or 0)
+        bp["welcome"] = {"system_channel": cname[guild["system_channel_id"]],
+                         "join_messages": not flags & SYS_SUPPRESS_JOIN, "boost_messages": not flags & SYS_SUPPRESS_BOOST,
+                         "setup_tips": not flags & SYS_SUPPRESS_TIPS, "join_sticker_replies": not flags & SYS_SUPPRESS_JOIN_REPLIES}
+    if community:
+        try:
+            ws = client.call("GET", f"/guilds/{gid}/welcome-screen") or {}
+            if ws.get("welcome_channels"):
+                bp.setdefault("welcome", {})["screen"] = {
+                    "description": clean(ws.get("description") or ""),
+                    "channels": [{"channel": cname[w["channel_id"]], "description": clean(w.get("description", "")),
+                                  **({"emoji": ("{:" + w["emoji_name"] + ":}") if w.get("emoji_id") else w["emoji_name"]}
+                                     if w.get("emoji_name") else {})}
+                                 for w in ws["welcome_channels"] if w.get("channel_id") in cname]}
+        except DiscordError:
+            pass
+        try:
+            ob = client.call("GET", f"/guilds/{gid}/onboarding") or {}
+            if ob.get("prompts"):
+                bp["onboarding"] = {
+                    "default_channels": [cname[i] for i in ob.get("default_channel_ids", []) if i in cname],
+                    "enable": bool(ob.get("enabled")),
+                    "questions": [{"title": p["title"], "single_select": bool(p.get("single_select")),
+                                   "required": bool(p.get("required")), "dropdown": p.get("type") == 1,
+                                   "options": [{"title": o["title"], "description": o.get("description") or "",
+                                                "roles": [rname[i] for i in o.get("role_ids", []) if i in rname],
+                                                "channels": [cname[i] for i in o.get("channel_ids", []) if i in cname],
+                                                **({"emoji": (o.get("emoji") or {}).get("name")} if (o.get("emoji") or {}).get("name")
+                                                   and not (o.get("emoji") or {}).get("id") else {})}
+                                               for o in p.get("options", [])]}
+                                  for p in ob["prompts"]]}
+        except DiscordError:
+            pass
+    if s["emojis"]:
+        bp["_notes"] = [f"The server had {len(s['emojis'])} custom emojis ({', '.join(e['name'] for e in s['emojis'][:10])}"
+                        f"{'...' if len(s['emojis']) > 10 else ''}). Images aren't exported: add your own files and an "
+                        "\"emojis\" list to include emojis."]
+    text = json.dumps(bp, indent=2, ensure_ascii=False)
+    leftover = ID_RE.findall(text)
+    if leftover:  # belt and braces: nothing ID-shaped may leave the server
+        text = ID_RE.sub("", text)
+    Path(args.out).write_text(text + "\n", encoding="utf-8")
+    nchan = sum(len(c["channels"]) for c in bp["categories"]) + len(bp.get("channels", []))
+    out(f"Exported {guild['name']}: {len(bp['roles'])} roles, {len(bp['categories'])} categories, {nchan} channels"
+        + (", AutoMod" if "automod" in bp else "") + (", onboarding" if "onboarding" in bp else "") + f" -> {args.out}")
+    out("Removed: all IDs, members, message authors and invite links. Review the starter texts before sharing.")
+    return 0
+
+
+# --------------------------------------------------------------------------- preview (HTML mockup)
+
+RTL_LANGS = ("ar", "he", "fa", "ur", "ps", "yi", "dv", "ckb")
+
+
+def _esc(s) -> str:
+    return (str(s).replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace('"', "&quot;"))
+
+
+def render_preview(bp: dict, base: Path) -> str:
+    lang = str(bp.get("language") or "en")
+    rtl = lang.split("-")[0].lower() in RTL_LANGS
+    roles = bp.get("roles", [])
+    rcolor = {r["name"].lower(): (r.get("color") or "#B5BAC1") for r in roles}
+    icons = {"text": "#", "announcement": "📢", "forum": "💬", "voice": "🔊", "stage": "🎙️"}
+
+    def fmt(text: str) -> str:
+        t = _esc(text.replace("{server}", bp.get("server_name") or "Server"))
+        t = re.sub(r"\{#([^{}]+)\}", lambda m: f'<span class="mention">#{m.group(1)}</span>', t)
+        t = re.sub(r"\{@([^{}]+)\}", lambda m: f'<span class="mention" style="color:{_esc(rcolor.get(m.group(1).lower(), "#C9CDFB"))}">@{m.group(1)}</span>', t)
+        t = re.sub(r"\{:(\w{2,32}):\}", lambda m: f'<span class="emo">:{m.group(1)}:</span>', t)
+        t = re.sub(r"\*\*(.+?)\*\*", r"<b>\1</b>", t)
+        t = re.sub(r"`([^`]+)`", r"<code>\1</code>", t)
+        t = re.sub(r"\|\|(.+?)\|\|", r'<span class="spoiler">\1</span>', t)
+        return t.replace("\n", "<br>")
+
+    def chan(ch, parent):
+        t = ch.get("type", "text")
+        acc = merged_access(parent, ch)
+        lock = ' <span class="lock" title="private">🔒</span>' if acc.get("private_to") else ""
+        ro = ' <span class="tag">read-only</span>' if acc.get("read_only") else ""
+        tk = ' <span class="tag">tickets</span>' if acc.get("thread_only") else ""
+        return (f'<div class="ch"><span class="ic">{icons.get(t, "#")}</span><span class="nm">{_esc(ch["name"])}</span>'
+                f'{lock}{ro}{tk}</div>')
+
+    side = []
+    for ch in bp.get("channels", []):
+        side.append(chan(ch, None))
+    for c in bp.get("categories", []):
+        lock = " 🔒" if c.get("private_to") else ""
+        side.append(f'<div class="cat">⌄ {_esc(c["name"])}{lock}</div>')
+        side += [chan(ch, c) for ch in c.get("channels", [])]
+
+    first = None
+    for c in bp.get("categories", []):
+        for ch in c.get("channels", []):
+            if ch.get("message") and not first:
+                first = (ch, c)
+    msg_html = ""
+    if first:
+        ch, _ = first
+        msg_html = (f'<div class="head"><span class="ic">#</span>{_esc(ch["name"])}'
+                    f'<span class="topic">{_esc(ch.get("topic", ""))}</span></div>'
+                    f'<div class="msg"><div class="av">🤖</div><div><div class="who">Server Builder <span class="bot">BOT</span>'
+                    f'{" <span class=tag>📌 pinned</span>" if ch.get("pin") else ""}</div><div class="txt">{fmt(ch["message"])}</div>'
+                    + ("".join(f'<span class="react">{fmt(x) if x.startswith("{") else _esc(x)} 1</span>' for x in ch.get("reactions", [])))
+                    + "</div></div>")
+
+    groups = []
+    for r in roles:
+        color = _esc(r.get("color") or "#B5BAC1")
+        groups.append(f'<div class="role"><span class="dot" style="background:{color}"></span>'
+                      f'<span style="color:{color}">{_esc(r["name"])}</span>{" ▲" if r.get("hoist") else ""}</div>')
+    emo = []
+    for e in bp.get("emojis", []):
+        img = ""
+        p = base / e.get("file", "")
+        if e.get("file") and p.is_file() and p.stat().st_size <= 300_000:
+            fmt_ = sniff(p.read_bytes())
+            if fmt_ in MIME and fmt_ != "lottie":
+                img = f'<img src="data:{MIME[fmt_]};base64,{base64.b64encode(p.read_bytes()).decode()}" alt="">'
+        emo.append(f'<span class="emoji">{img}<small>:{_esc(e["name"])}:</small></span>')
+    extras = []
+    if bp.get("automod"):
+        extras.append(f"🛡️ AutoMod: {_esc(bp['automod'].get('level', 'standard'))}")
+    if bp.get("onboarding"):
+        extras.append(f"🧭 Onboarding: {len(bp['onboarding'].get('questions', []))} question(s)")
+    if (bp.get("welcome") or {}).get("screen"):
+        extras.append("👋 Welcome screen")
+
+    css = """
+:root{--bg:#313338;--side:#2B2D31;--rail:#1E1F22;--text:#DBDEE1;--mute:#949BA4;--hover:#35373C;--accent:#5865F2}
+@media (prefers-color-scheme: light){:root:not([data-theme=dark]){--bg:#FFFFFF;--side:#F2F3F5;--rail:#E3E5E8;--text:#313338;--mute:#5C5E66;--hover:#E0E1E5}}
+:root[data-theme=dark]{--bg:#313338;--side:#2B2D31;--rail:#1E1F22;--text:#DBDEE1;--mute:#949BA4;--hover:#35373C}
+*{box-sizing:border-box}body{margin:0;background:var(--rail);color:var(--text);font:15px/1.4 "gg sans","Noto Sans","Segoe UI",system-ui,sans-serif}
+.app{display:grid;grid-template-columns:72px 260px 1fr 240px;height:100vh}
+.rail{background:var(--rail);padding:12px 0;display:flex;flex-direction:column;align-items:center;gap:8px}
+.srv{width:48px;height:48px;border-radius:16px;background:var(--accent);color:#fff;display:grid;place-items:center;font-weight:700}
+.side{background:var(--side);overflow:auto}.title{padding:14px 16px;font-weight:700;border-bottom:1px solid rgba(0,0,0,.25);box-shadow:0 1px 0 rgba(0,0,0,.1)}
+.cat{margin:16px 8px 4px 12px;font-size:12px;font-weight:700;letter-spacing:.02em;color:var(--mute);text-transform:uppercase}
+.ch{margin:1px 8px;padding:6px 8px;border-radius:4px;color:var(--mute);display:flex;gap:6px;align-items:center}.ch:hover{background:var(--hover);color:var(--text)}
+.ic{opacity:.8;width:18px;text-align:center}.nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.lock{font-size:11px}
+.tag{font-size:10px;background:var(--hover);border-radius:3px;padding:0 4px;color:var(--mute)}
+.main{background:var(--bg);overflow:auto}.head{padding:12px 16px;font-weight:700;border-bottom:1px solid rgba(0,0,0,.2);display:flex;gap:8px;align-items:center}
+.topic{font-weight:400;color:var(--mute);font-size:13px;margin-inline-start:12px}
+.msg{display:flex;gap:14px;padding:18px}.av{width:40px;height:40px;border-radius:50%;background:var(--accent);display:grid;place-items:center;flex:none}
+.who{font-weight:600}.bot{background:var(--accent);color:#fff;font-size:10px;border-radius:3px;padding:1px 4px;margin-inline-start:4px}
+.txt{margin-top:4px}.mention{background:rgba(88,101,242,.3);border-radius:3px;padding:0 2px;color:#C9CDFB}
+code{background:var(--side);padding:1px 4px;border-radius:3px}.spoiler{background:#1E1F22;color:#1E1F22;border-radius:3px}
+.react{display:inline-block;margin:8px 6px 0 0;padding:2px 8px;border-radius:8px;background:var(--side);border:1px solid var(--accent);font-size:13px}
+.members{background:var(--side);padding:16px;overflow:auto}.members h4{margin:0 0 8px;font-size:12px;color:var(--mute);text-transform:uppercase}
+.role{display:flex;gap:8px;align-items:center;padding:4px 0}.dot{width:10px;height:10px;border-radius:50%;flex:none}
+.emojis{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}.emoji{display:flex;flex-direction:column;align-items:center;font-size:11px;color:var(--mute)}
+.emoji img{width:32px;height:32px;object-fit:contain}.extras{padding:0 18px 18px;color:var(--mute);font-size:13px}.extras span{margin-inline-end:14px}
+@media (max-width:900px){.app{grid-template-columns:1fr;height:auto}.rail,.members{display:none}.side{max-height:none}}
+"""
+    return f"""<!doctype html>
+<html lang="{_esc(lang)}" dir="{'rtl' if rtl else 'ltr'}"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{_esc(bp.get('server_name') or 'Server')} preview</title><style>{css}</style></head>
+<body><div class="app">
+<nav class="rail"><div class="srv">{_esc((bp.get('server_name') or 'S')[:2])}</div></nav>
+<aside class="side"><div class="title">{_esc(bp.get('server_name') or 'Server')}</div>{''.join(side)}</aside>
+<main class="main">{msg_html}<div class="extras">{''.join(f'<span>{x}</span>' for x in extras)}</div></main>
+<aside class="members"><h4>Roles — {len(roles)}</h4>{''.join(groups)}
+{'<h4 style="margin-top:16px">Emojis</h4><div class="emojis">' + ''.join(emo) + '</div>' if emo else ''}</aside>
+</div></body></html>
+"""
+
+
+def cmd_preview(args) -> int:
+    bp, errors, warnings = load_blueprint(args.blueprint)
+    print_plan(bp)
+    for e in errors:
+        out(f"ERROR: {e}")
+    html = render_preview(bp, Path(args.blueprint).resolve().parent)
+    dest = Path(args.out or Path(args.blueprint).with_suffix(".preview.html"))
+    dest.write_text(html, encoding="utf-8")
+    out(f"\nPreview written to {dest} (open it in a browser; it makes no network requests).")
+    return 1 if errors else 0
 
 
 def cmd_delete(args, client: Client | None = None) -> int:
@@ -1996,6 +2635,16 @@ def main(argv=None) -> int:
     a.add_argument("--dry-run", action="store_true")
     a.add_argument("--update", action="store_true", help="also change existing items to match")
     a.add_argument("--confirm-delete", action="store_true", help="with --update: delete what 'remove' lists")
+    a.add_argument("--no-health", action="store_true", help="skip the health score at the end")
+    h = sub.add_parser("health", help="score a live server (--guild) or a blueprint 0-100 with fixes")
+    h.add_argument("blueprint", nargs="?")
+    h.add_argument("--guild")
+    x = sub.add_parser("export", help="turn a live server into a clean, shareable blueprint")
+    x.add_argument("--guild", required=True)
+    x.add_argument("out")
+    p = sub.add_parser("preview", help="write a Discord-style HTML mockup of a blueprint")
+    p.add_argument("blueprint")
+    p.add_argument("--out")
     d = sub.add_parser("delete", help="delete named channels/roles/emojis/stickers")
     d.add_argument("--guild", required=True)
     d.add_argument("--channel", action="append")
@@ -2010,7 +2659,8 @@ def main(argv=None) -> int:
     u.add_argument("--dry-run", action="store_true")
     args = ap.parse_args(argv)
     return {"validate": cmd_validate, "check": cmd_check, "inspect": cmd_inspect, "apply": cmd_apply,
-            "delete": cmd_delete, "undo": cmd_undo}[args.cmd](args)
+            "delete": cmd_delete, "undo": cmd_undo, "health": cmd_health, "export": cmd_export,
+            "preview": cmd_preview}[args.cmd](args)
 
 
 if __name__ == "__main__":
