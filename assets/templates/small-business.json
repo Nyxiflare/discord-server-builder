@@ -72,6 +72,17 @@
           "topic": "Questions about products, orders or bookings - staff reply during opening hours."
         },
         {
+          "name": "private-order-help",
+          "thread_only": true,
+          "thread_staff": [
+            "Staff",
+            "Owner"
+          ],
+          "pin": true,
+          "topic": "Order or booking problem? Open a private thread - only you and staff can see it.",
+          "message": "**Problem with an order or booking?**\n1. Press the **Threads** button (or **+**) here and choose **Private Thread**.\n2. Name it with your order number.\n3. Tell us what happened - only you and {@Staff} can see it.\n\nNever post card details here; we'll never ask for them."
+        },
+        {
           "name": "reviews",
           "topic": "Tell us how we did.",
           "slowmode": 120
@@ -131,5 +142,24 @@
         }
       ]
     }
-  ]
+  ],
+  "automod": {
+    "level": "standard",
+    "alert_channel": "orders-and-issues",
+    "exempt_roles": [
+      "Staff",
+      "Owner"
+    ],
+    "exempt_channels": [
+      "team-chat"
+    ],
+    "blocked_words": [],
+    "allowed_words": []
+  },
+  "welcome": {
+    "system_channel": "general",
+    "join_messages": true,
+    "boost_messages": false,
+    "setup_tips": false
+  }
 }

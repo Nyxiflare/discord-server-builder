@@ -21,6 +21,36 @@
       "permissions": "member"
     },
     {
+      "name": "Legend",
+      "color": "#FFD700",
+      "hoist": true,
+      "permissions": "none"
+    },
+    {
+      "name": "Elite",
+      "color": "#C0392B",
+      "hoist": true,
+      "permissions": "none"
+    },
+    {
+      "name": "Pro",
+      "color": "#8E44AD",
+      "hoist": false,
+      "permissions": "none"
+    },
+    {
+      "name": "Grinder",
+      "color": "#2980B9",
+      "hoist": false,
+      "permissions": "none"
+    },
+    {
+      "name": "Rookie",
+      "color": "#27AE60",
+      "hoist": false,
+      "permissions": "none"
+    },
+    {
       "name": "Tournament Player",
       "color": "#E67E22",
       "mentionable": true,
@@ -28,6 +58,12 @@
     },
     {
       "name": "Live Ping",
+      "color": "#9B59B6",
+      "mentionable": true,
+      "permissions": "none"
+    },
+    {
+      "name": "Giveaway Pings",
       "color": "#9B59B6",
       "mentionable": true,
       "permissions": "none"
@@ -78,6 +114,19 @@
           "message": "**Rules**\n\n1. **No toxicity.** Banter is fine; harassment, slurs and rage-baiting are not.\n2. **No cheats, hacks, exploits or account selling/boosting.**\n3. **Spoilers** for new games/updates only inside ||spoiler tags||.\n4. No spam, ads or random invites. Self-promo only in {#clips}.\n5. Use the right channel - LFG posts go in {#lfg}.\n6. Mods have the final say.\n\nWarning → timeout → ban."
         },
         {
+          "name": "🎭┃get-roles",
+          "topic": "Pick your platform and pings.",
+          "pin": true,
+          "message": "**Get your roles** - react below (remove the reaction to drop it):\n\n🖥️ {@PC}   🎮 {@Console}   📱 {@Mobile}\n🔴 {@Live Ping} - go-live alerts\n🎁 {@Giveaway Pings} - giveaways\n\nLevel roles ({@Rookie} → {@Legend}) come automatically as you chat.",
+          "reactions": [
+            "🖥️",
+            "🎮",
+            "📱",
+            "🔴",
+            "🎁"
+          ]
+        },
+        {
           "name": "📢┃announcements",
           "type": "announcement",
           "topic": "Game nights, tournaments, new videos."
@@ -104,8 +153,17 @@
         },
         {
           "name": "🎬┃clips",
-          "topic": "Your best (and worst) plays. Clip of the week gets featured.",
-          "slowmode": 60
+          "topic": "Your best plays. Uploads unlock at Grinder (level 5) to stop spam bots. Clip of the week gets featured.",
+          "slowmode": 60,
+          "media_to": [
+            "Grinder",
+            "Pro",
+            "Elite",
+            "Legend",
+            "Member+",
+            "Moderator",
+            "Admin"
+          ]
         },
         {
           "name": "🆙┃level-ups",
@@ -130,12 +188,31 @@
         {
           "name": "😂┃memes",
           "topic": "Gaming memes only."
+        },
+        {
+          "name": "👑┃legends-lounge",
+          "private_to": [
+            "Elite",
+            "Legend",
+            "Moderator",
+            "Admin"
+          ],
+          "topic": "For Elite and Legend members. Keep grinding."
         }
       ]
     },
     {
       "name": "🏆 EVENTS",
       "channels": [
+        {
+          "name": "🎁┃giveaways",
+          "read_only": true,
+          "writers": [
+            "Admin",
+            "Moderator"
+          ],
+          "topic": "Giveaways - press the button on the post to enter. No purchase necessary; rules in each post."
+        },
         {
           "name": "🏆┃tournaments",
           "read_only": true,
@@ -218,5 +295,143 @@
         }
       ]
     }
-  ]
+  ],
+  "automod": {
+    "level": "family-friendly",
+    "alert_channel": "mod-log",
+    "exempt_roles": [
+      "Moderator",
+      "Admin"
+    ],
+    "exempt_channels": [
+      "mod-chat",
+      "mod-log"
+    ],
+    "scam_words": [
+      "free vbucks",
+      "free v-bucks",
+      "free robux",
+      "account for sale",
+      "selling accounts",
+      "cheap boosting",
+      "free skins"
+    ],
+    "allowed_words": [
+      "kill",
+      "shoot",
+      "sniper",
+      "headshot"
+    ],
+    "blocked_words": []
+  },
+  "welcome": {
+    "system_channel": "general",
+    "join_messages": true,
+    "join_sticker_replies": true,
+    "boost_messages": true,
+    "setup_tips": false,
+    "screen": {
+      "description": "Squads, clips, game nights and tournaments.",
+      "channels": [
+        {
+          "channel": "rules",
+          "description": "Read first",
+          "emoji": "📜"
+        },
+        {
+          "channel": "get-roles",
+          "description": "Platform and ping roles",
+          "emoji": "🎭"
+        },
+        {
+          "channel": "lfg",
+          "description": "Find a squad",
+          "emoji": "🔎"
+        },
+        {
+          "channel": "clips",
+          "description": "Post your best plays",
+          "emoji": "🎬"
+        },
+        {
+          "channel": "game-night",
+          "description": "This week's game night",
+          "emoji": "🗓️"
+        }
+      ]
+    }
+  },
+  "onboarding": {
+    "default_channels": [
+      "welcome",
+      "rules",
+      "announcements",
+      "patch-notes",
+      "general",
+      "lfg",
+      "clips",
+      "memes",
+      "game-night"
+    ],
+    "questions": [
+      {
+        "title": "What do you play on?",
+        "options": [
+          {
+            "title": "PC",
+            "emoji": "🖥️",
+            "roles": [
+              "PC"
+            ]
+          },
+          {
+            "title": "Console",
+            "emoji": "🎮",
+            "roles": [
+              "Console"
+            ]
+          },
+          {
+            "title": "Mobile",
+            "emoji": "📱",
+            "roles": [
+              "Mobile"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "What should we ping you for?",
+        "options": [
+          {
+            "title": "Going live",
+            "emoji": "🔴",
+            "roles": [
+              "Live Ping"
+            ]
+          },
+          {
+            "title": "Giveaways",
+            "emoji": "🎁",
+            "roles": [
+              "Giveaway Pings"
+            ],
+            "channels": [
+              "giveaways"
+            ]
+          },
+          {
+            "title": "Tournaments",
+            "emoji": "🏆",
+            "roles": [
+              "Tournament Player"
+            ],
+            "channels": [
+              "tournaments"
+            ]
+          }
+        ]
+      }
+    ]
+  }
 }

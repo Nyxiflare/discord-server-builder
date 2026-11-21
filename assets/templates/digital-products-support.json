@@ -21,6 +21,12 @@
       "permissions": "member"
     },
     {
+      "name": "Product Updates",
+      "color": "#9B59B6",
+      "mentionable": true,
+      "permissions": "none"
+    },
+    {
       "name": "Member",
       "color": "#95A5A6",
       "permissions": "member"
@@ -83,14 +89,14 @@
         },
         {
           "name": "open-a-ticket",
-          "read_only": true,
-          "writers": [
-            "Admin",
-            "Support Team"
-          ],
-          "topic": "Press the button here to open a private support ticket (ticket bot).",
+          "topic": "Private support: open a private thread here (or press the ticket button if a ticket bot is set up).",
           "pin": true,
-          "message": "**Need private help?** (order problems, refunds, licence keys)\nPress the button below to open a ticket only you and {@Support Team} can see. For general questions, use {#help-forum}."
+          "message": "**Need private help?** (order problems, refunds, downloads, licence keys)\n\n1. Press the **Threads** button (or **+**) in this channel and choose **Private Thread**.\n2. Name it `Order - your email` or `Refund - product name`.\n3. Describe the problem. Only you and {@Support Team} can see it.\n\nNever post card details or passwords - we'll never ask for them. General questions go in {#help-forum}.",
+          "thread_only": true,
+          "thread_staff": [
+            "Support Team",
+            "Admin"
+          ]
         },
         {
           "name": "help-forum",
@@ -172,8 +178,123 @@
         {
           "name": "mod-log",
           "topic": "Warnings, bans and leaked-file reports."
+        },
+        {
+          "name": "ticket-log",
+          "topic": "Ticket outcomes: customer, issue, how it was resolved."
         }
       ]
     }
-  ]
+  ],
+  "automod": {
+    "level": "standard",
+    "alert_channel": "mod-log",
+    "exempt_roles": [
+      "Support Team",
+      "Admin"
+    ],
+    "exempt_channels": [
+      "staff-chat",
+      "mod-log",
+      "role-requests"
+    ],
+    "scam_words": [
+      "cheaper on telegram",
+      "selling cracked",
+      "free download link",
+      "leaked version"
+    ],
+    "blocked_words": [],
+    "allowed_words": []
+  },
+  "welcome": {
+    "system_channel": "general",
+    "join_messages": true,
+    "boost_messages": true,
+    "setup_tips": false,
+    "screen": {
+      "description": "Help, updates and downloads for our products.",
+      "channels": [
+        {
+          "channel": "faq",
+          "description": "Quick answers",
+          "emoji": "❓"
+        },
+        {
+          "channel": "get-customer-role",
+          "description": "Bought something? Unlock downloads",
+          "emoji": "🔓"
+        },
+        {
+          "channel": "help-forum",
+          "description": "Ask for help",
+          "emoji": "🛠️"
+        },
+        {
+          "channel": "open-a-ticket",
+          "description": "Private support",
+          "emoji": "🎫"
+        },
+        {
+          "channel": "changelog",
+          "description": "What's new",
+          "emoji": "📦"
+        }
+      ]
+    }
+  },
+  "onboarding": {
+    "default_channels": [
+      "welcome",
+      "rules",
+      "announcements",
+      "changelog",
+      "faq",
+      "pre-sales-questions",
+      "general",
+      "showcase"
+    ],
+    "questions": [
+      {
+        "title": "What brings you here?",
+        "single_select": true,
+        "options": [
+          {
+            "title": "I bought something",
+            "emoji": "🧾",
+            "channels": [
+              "get-customer-role",
+              "open-a-ticket"
+            ]
+          },
+          {
+            "title": "Thinking about buying",
+            "emoji": "🤔",
+            "channels": [
+              "pre-sales-questions"
+            ]
+          },
+          {
+            "title": "Just browsing",
+            "emoji": "👀",
+            "channels": [
+              "showcase"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Want product update pings?",
+        "options": [
+          {
+            "title": "Yes, ping me about updates",
+            "emoji": "📦",
+            "roles": [
+              "Product Updates"
+            ]
+          }
+        ]
+      }
+    ]
+  }
 }

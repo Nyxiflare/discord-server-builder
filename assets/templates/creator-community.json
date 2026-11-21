@@ -27,6 +27,24 @@
       "permissions": "none"
     },
     {
+      "name": "Video Drops",
+      "color": "#9B59B6",
+      "mentionable": true,
+      "permissions": "none"
+    },
+    {
+      "name": "Events",
+      "color": "#9B59B6",
+      "mentionable": true,
+      "permissions": "none"
+    },
+    {
+      "name": "Giveaway Pings",
+      "color": "#9B59B6",
+      "mentionable": true,
+      "permissions": "none"
+    },
+    {
       "name": "Member",
       "color": "#95A5A6",
       "permissions": "member"
@@ -64,10 +82,26 @@
           "topic": "New videos and go-live alerts (from the alert bot). Grab the Live Ping role to get notified."
         },
         {
+          "name": "get-roles",
+          "topic": "Pick which pings you want.",
+          "pin": true,
+          "message": "**Pick your pings** - react to get a role, remove the reaction to drop it.\n\n🔴 {@Live Ping} - when the stream goes live\n🎬 {@Video Drops} - new videos\n📅 {@Events} - Q&As, watch parties, collabs\n🎁 {@Giveaway Pings} - giveaways\n\n(Works through a reaction-role bot. Once Community is on, the same choices also appear when people join.)",
+          "reactions": [
+            "🔴",
+            "🎬",
+            "📅",
+            "🎁"
+          ]
+        },
+        {
           "name": "faq",
           "topic": "Answers to the questions we get most.",
           "pin": true,
           "message": "**FAQ**\n\n**How do I become a Supporter?** Support the channel through the membership link in the video descriptions; your role is added within 24 hours.\n**Can I share my own content?** Yes - in {#share-your-work} only.\n**How do I report someone?** Ping {@Moderator} or message one directly."
+        },
+        {
+          "name": "giveaways",
+          "topic": "Giveaways - enter on the giveaway post. No purchase necessary; rules are in each post."
         }
       ]
     },
@@ -98,6 +132,17 @@
         {
           "name": "off-topic",
           "topic": "Memes, music, anything else."
+        },
+        {
+          "name": "contact-the-team",
+          "thread_only": true,
+          "thread_staff": [
+            "Moderator",
+            "Admin"
+          ],
+          "pin": true,
+          "topic": "Collab inquiries, reports and private questions - open a private thread.",
+          "message": "**Need to reach the team privately?** (collab or brand inquiry, reporting a member, account problems)\n\n1. Press the **Threads** button (or **+**) in this channel and choose **Private Thread**.\n2. Name it like `Collab - YourName` or `Report - username`.\n3. Explain what's up. Only you and {@Moderator} can see it.\n\nPlease don't DM staff - threads keep everything in one place."
         }
       ]
     },
@@ -160,8 +205,113 @@
         {
           "name": "mod-log",
           "topic": "Record warnings, timeouts and bans here: who, what, why."
+        },
+        {
+          "name": "ticket-log",
+          "topic": "Log of private threads: who, what, outcome."
         }
       ]
     }
-  ]
+  ],
+  "automod": {
+    "level": "standard",
+    "alert_channel": "mod-log",
+    "exempt_roles": [
+      "Moderator",
+      "Admin"
+    ],
+    "exempt_channels": [
+      "mod-chat",
+      "mod-log"
+    ],
+    "blocked_words": [],
+    "allowed_words": []
+  },
+  "welcome": {
+    "system_channel": "general",
+    "join_messages": true,
+    "join_sticker_replies": true,
+    "boost_messages": true,
+    "setup_tips": false,
+    "screen": {
+      "description": "The community for everyone who watches and builds along.",
+      "channels": [
+        {
+          "channel": "rules",
+          "description": "Read this first",
+          "emoji": "📜"
+        },
+        {
+          "channel": "get-roles",
+          "description": "Pick the pings you want",
+          "emoji": "🔔"
+        },
+        {
+          "channel": "introductions",
+          "description": "Say who you are",
+          "emoji": "👋"
+        },
+        {
+          "channel": "share-your-work",
+          "description": "Show what you made",
+          "emoji": "🎨"
+        },
+        {
+          "channel": "general",
+          "description": "Hang out",
+          "emoji": "💬"
+        }
+      ]
+    }
+  },
+  "onboarding": {
+    "default_channels": [
+      "welcome",
+      "rules",
+      "announcements",
+      "faq",
+      "general",
+      "introductions",
+      "share-your-work",
+      "off-topic"
+    ],
+    "questions": [
+      {
+        "title": "What do you want to be pinged for?",
+        "options": [
+          {
+            "title": "Going live",
+            "emoji": "🔴",
+            "roles": [
+              "Live Ping"
+            ]
+          },
+          {
+            "title": "New videos",
+            "emoji": "🎬",
+            "roles": [
+              "Video Drops"
+            ]
+          },
+          {
+            "title": "Events and Q&As",
+            "emoji": "📅",
+            "roles": [
+              "Events"
+            ]
+          },
+          {
+            "title": "Giveaways",
+            "emoji": "🎁",
+            "roles": [
+              "Giveaway Pings"
+            ],
+            "channels": [
+              "giveaways"
+            ]
+          }
+        ]
+      }
+    ]
+  }
 }

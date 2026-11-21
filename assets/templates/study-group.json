@@ -130,5 +130,62 @@
         }
       ]
     }
-  ]
+  ],
+  "automod": {
+    "level": "family-friendly",
+    "alert_channel": "mod-log",
+    "exempt_roles": [
+      "Mentor",
+      "Admin"
+    ],
+    "exempt_channels": [
+      "mentor-chat",
+      "mod-log"
+    ],
+    "scam_words": [
+      "pay someone to do",
+      "do your assignment",
+      "exam answers for sale",
+      "essay writing service",
+      "leaked paper"
+    ],
+    "blocked_words": [],
+    "allowed_words": []
+  },
+  "welcome": {
+    "system_channel": "general",
+    "join_messages": true,
+    "boost_messages": false,
+    "setup_tips": false,
+    "screen": {
+      "description": "Study together, stay accountable, help each other understand.",
+      "channels": [
+        {
+          "channel": "rules",
+          "description": "Group rules",
+          "emoji": "📜"
+        },
+        {
+          "channel": "introductions",
+          "description": "Your goal and exam date",
+          "emoji": "👋"
+        },
+        {
+          "channel": "ask-a-question",
+          "description": "Stuck? Ask here",
+          "emoji": "❓"
+        },
+        {
+          "channel": "resources",
+          "description": "Notes and practice sets",
+          "emoji": "📚"
+        },
+        {
+          "channel": "daily-goals",
+          "description": "Today's goal",
+          "emoji": "✅"
+        }
+      ]
+    }
+  }
 }
